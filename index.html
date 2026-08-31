@@ -2442,7 +2442,10 @@ function getLocationDisplayName(location) {
 function updateDesktopSeaActions(location) {
     const actions = document.getElementById("desktopSeaActions");
     if (!actions) return;
-    actions.style.display = (location && location.type !== "lake") ? "grid" : "none";
+    actions.style.display =
+        (location && location.type !== "lake" && location.tideStation)
+            ? "grid"
+            : "none";
 }
 
 async function checkConditions() {
@@ -2535,11 +2538,15 @@ if (seaTidesCard) {
             marineData =
                 await marineResponse.json();
 
-            const tideResponse =
-                await fetch(tideUrl);
+            // Only locations with an Irish Marine Institute tide station
+            // use the Irish tide API. International locations use marine data.
+            if (selectedLocation.tideStation) {
+                const tideResponse =
+                    await fetch(tideUrl);
 
-            tideData =
-                await tideResponse.json();
+                tideData =
+                    await tideResponse.json();
+            }
 
         }
 
@@ -2645,6 +2652,124 @@ if (seaTidesCard) {
 const lakeForecastCard = document.getElementById("lakeForecastCard");
 if (lakeForecastCard) {
     lakeForecastCard.style.display = "none";
+}
+
+/*
+   INTERNATIONAL SEA / LAGOON LOCATIONS
+   ------------------------------------
+   Locations without a tideStation use Open-Meteo weather + marine data.
+   Irish Marine Institute tide information is only used for locations
+   that explicitly provide a tideStation.
+*/
+if (!selectedLocation.tideStation) {
+
+    const windSpeed = Number(current.wind_speed_10m);
+    const windDirectionDegrees = Number(current.wind_direction_10m);
+    const windDirection = getWindDirection(windDirectionDegrees);
+
+    const waveHeight = Number(marineData.current.wave_height);
+    const wavePeriod = Number(marineData.current.wave_period);
+    const waveDirection = Number(marineData.current.wave_direction);
+    const waterTemperature = Number(marineData.current.sea_surface_temperature);
+
+    const swimScore = calculateSwimScore(
+        waveHeight,
+        wavePeriod,
+        windSpeed,
+        windDirection
+    );
+
+    let rating;
+    if (swimScore >= 80) rating = "🟢 EXCELLENT CONDITIONS";
+    else if (swimScore >= 60) rating = "🟡 GOOD CONDITIONS";
+    else if (swimScore >= 40) rating = "🟠 CHALLENGING CONDITIONS";
+    else rating = "🔴 POOR CONDITIONS";
+
+    const reasons = [];
+
+    if (windDirection === "West") {
+        reasons.push("✅ Westerly wind - ideal direction");
+    } else if (windDirection.includes("North")) {
+        reasons.push("⚠️ Northerly wind - less favourable");
+    } else {
+        reasons.push("ℹ️ Wind direction: " + windDirection);
+    }
+
+    if (windSpeed <= 3) {
+        reasons.push("✅ Light wind (" + windSpeed + " m/s)");
+    } else if (windSpeed <= 5) {
+        reasons.push("🟡 Moderate wind (" + windSpeed + " m/s)");
+    } else {
+        reasons.push("🔴 Strong wind (" + windSpeed + " m/s)");
+    }
+
+    if (waveHeight <= 0.5) {
+        reasons.push("✅ Small waves (" + waveHeight + " m)");
+    } else if (waveHeight <= 1) {
+        reasons.push("🟡 Moderate waves (" + waveHeight + " m)");
+    } else {
+        reasons.push("🔴 Large waves (" + waveHeight + " m)");
+    }
+
+    if (Number.isFinite(waterTemperature)) {
+        if (waterTemperature >= 15) {
+            reasons.push("✅ Comfortable water temperature (" + waterTemperature + "°C)");
+        } else if (waterTemperature >= 12) {
+            reasons.push("🟡 Cold water (" + waterTemperature + "°C)");
+        } else {
+            reasons.push("🔴 Very cold water (" + waterTemperature + "°C)");
+        }
+    }
+
+    document.getElementById("conditions").innerHTML = `
+        <div class="mobile-context-location">📍 ${getLocationDisplayName(selectedLocation)}</div>
+        🌡 Air temperature:
+        ${current.temperature_2m}°C
+        <br>
+        🌊 Water temperature:
+        ${Number.isFinite(waterTemperature) ? waterTemperature + "°C" : "Unavailable"}
+        <br>
+        💨 Wind speed:
+        ${windSpeed} m/s
+        <br>
+        🧭 Wind direction:
+        ${getCompassDirection(windDirectionDegrees)}
+        <br>
+        ☁ Conditions:
+        ${getWeatherDescription(current.weather_code)}
+        <br><br>
+        🌊 Wave height:
+        ${Number.isFinite(waveHeight) ? waveHeight + " m" : "Unavailable"}
+        <br>
+        ⏱ Wave period:
+        ${Number.isFinite(wavePeriod) ? wavePeriod + " s" : "Unavailable"}
+        <br>
+        🌊 Swell direction:
+        ${Number.isFinite(waveDirection)
+            ? getCompassDirection(waveDirection) + " (" + waveDirection.toFixed(0) + "°)"
+            : "Unavailable"}
+    `;
+
+    document.getElementById("recommendation").innerHTML = `
+        <div class="mobile-context-location">📍 ${getLocationDisplayName(selectedLocation)}</div>
+        🏊 Swim Score:
+        ${swimScore}/100
+        <br>
+        ${rating}
+        <br><br>
+        ${reasons.join("<br>")}
+    `;
+
+    const seaTidesCard = document.getElementById("seaTidesCard");
+    const travelPlannerCard = document.getElementById("travelPlannerCard");
+    if (seaTidesCard) seaTidesCard.style.display = "none";
+    if (travelPlannerCard) travelPlannerCard.style.display = "none";
+
+    window.currentSeaTides = null;
+
+    // International locations still get the full 7-day weather/marine forecast.
+    loadSeaForecast(selectedLocation);
+    return;
 }
 
 
