@@ -5411,15 +5411,29 @@ function translatePage() {
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
 
+    // Always translate from the original English text so switching directly
+    // between languages remains reliable.
     nodes.forEach(node => {
-        const translated = translateString(node.nodeValue);
-        if (translated !== node.nodeValue) node.nodeValue = translated;
+        if (node.__swimOriginalText === undefined) {
+            node.__swimOriginalText = node.nodeValue;
+        }
+        const original = node.__swimOriginalText;
+        const translated = translateString(original);
+        if (node.nodeValue !== translated) {
+            node.nodeValue = translated;
+        }
     });
 
     // Translate select options separately.
     document.querySelectorAll("option").forEach(option => {
-        const translated = translateString(option.textContent);
-        if (translated !== option.textContent) option.textContent = translated;
+        if (option.__swimOriginalText === undefined) {
+            option.__swimOriginalText = option.textContent;
+        }
+        const original = option.__swimOriginalText;
+        const translated = translateString(original);
+        if (option.textContent !== translated) {
+            option.textContent = translated;
+        }
     });
 
     updateLanguageMenu();
@@ -5427,19 +5441,29 @@ function translatePage() {
 }
 
 let languageObserverStarted = false;
+let languageObserver = null;
 
 function startLanguageObserver() {
     if (languageObserverStarted || !document.body) return;
     languageObserverStarted = true;
 
-    const observer = new MutationObserver(() => {
-        if (window.__translatingSwimPlanner) return;
-        window.__translatingSwimPlanner = true;
-        translatePage();
-        window.__translatingSwimPlanner = false;
+    languageObserver = new MutationObserver(() => {
+        // Disconnect while translating. Otherwise changing text/HTML inside
+        // the observed body can trigger the observer repeatedly and freeze
+        // the page.
+        languageObserver.disconnect();
+        try {
+            translatePage();
+        } finally {
+            languageObserver.observe(document.body, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+        }
     });
 
-    observer.observe(document.body, {
+    languageObserver.observe(document.body, {
         childList: true,
         subtree: true,
         characterData: true
