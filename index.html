@@ -2213,6 +2213,7 @@ body.dark-theme .sea-forecast-summary {
             <p class="release-intro">Here’s what’s new in this release:</p>
             <ul class="release-list">
                 <li><span class="release-icon">🌍</span><div><strong>New languages</strong><br>English, Chinese, Hindi, Spanish and French are now available.</div></li>
+                <li><span class="release-icon">🌡️</span><div><strong>Temperature &amp; measurement units</strong><br>Switch between Metric (°C, km, m) and Imperial (°F, miles, ft) units from the menu.</div></li>
                 <li><span class="release-icon">📍</span><div><strong>More swim locations</strong><br>New lake and Tahiti locations have been added.</div></li>
                 <li><span class="release-icon">🌦️</span><div><strong>Improved forecast information</strong><br>Forecast details, conditions and swim recommendations have been improved.</div></li>
                 <li><span class="release-icon">📱</span><div><strong>Improved mobile experience</strong><br>Forecast and information panels have been refined for easier use on phones and tablets.</div></li>
@@ -6072,6 +6073,10 @@ function initialiseApp() {
     if (locationSelect && locationSelect.value) {
         checkConditions();
     }
+
+    // Show the current release notes once for this browser/device.
+    // After the visitor dismisses them, they remain available from the app menu.
+    showReleaseNotesIfNeeded();
 }
 
 if (document.readyState === "loading") {
