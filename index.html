@@ -2353,7 +2353,7 @@ body.dark-theme .sea-forecast-summary {
     <select id="highTideSelect">
         <option value="">Check swim conditions first...</option>
     </select>
-    <button type="button" onclick="predictSwimConditions()">🔮 Predict Swim Conditions</button>
+    <button type="button" onclick="predictSwimConditions()">🔮 ${translateString("Predict Swim Conditions")}</button>
     <div id="predictionResult"></div>
     <button type="button" onclick="calculateJourney()">📍 Calculate Journey From My Location</button>
     <p id="journeyResult">Waiting for location and tide information...</p>
@@ -2958,21 +2958,21 @@ if (seaTidesCard) {
             document.getElementById("conditions").innerHTML = `
                 <div class="mobile-context-location">📍 ${getLocationDisplayName(selectedLocation)}</div>
                 <div class="conditions-metrics">
-                    🌡️ Air temperature: <strong>${formatTemperature(current.temperature_2m, 1)}</strong><br>
-                    🏞️ Lake water temperature: <strong>${lakeWaterTemperature !== null && Number.isFinite(lakeWaterTemperature) ? formatTemperature(lakeWaterTemperature, 1) : "Unavailable"}</strong><br>
-                    💨 Wind: <strong>${formatWind(windSpeed, 1)} ${windDirection}</strong> (${windDegrees.toFixed(0)}°)<br>
-                    ☁️ Conditions: <strong>${getWeatherDescription(current.weather_code)}</strong>
+                    🌡️ ${translateString("Air temperature")}: <strong>${formatTemperature(current.temperature_2m, 1)}</strong><br>
+                    🏞️ ${translateString("Lake water temperature")}: <strong>${lakeWaterTemperature !== null && Number.isFinite(lakeWaterTemperature) ? formatTemperature(lakeWaterTemperature, 1) : translateString("Unavailable")}</strong><br>
+                    💨 ${translateString("Wind")}: <strong>${formatWind(windSpeed, 1)} ${windDirection}</strong> (${windDegrees.toFixed(0)}°)<br>
+                    ☁️ ${translateString("Conditions")}: <strong>${getWeatherDescription(current.weather_code)}</strong>
                 </div>
             `;
 
             document.getElementById("recommendation").innerHTML = `
                 <div class="mobile-context-location">📍 ${getLocationDisplayName(selectedLocation)}</div>
                 <div class="lake-summary">
-                    <strong>${assessment.condition}</strong>
+                    <strong>${translateString(assessment.condition)}</strong>
                 </div>
-                ${assessment.advice}<br><br>
-                <strong>📍 Sheltered side</strong><br>
-                ${assessment.impact}
+                ${translateString(assessment.advice)}<br><br>
+                <strong>📍 ${translateString("Sheltered side")}</strong><br>
+                ${translateString(assessment.impact)}
             `;
 
             document.getElementById("seaTidesCard").style.display = "none";
@@ -3062,28 +3062,28 @@ if (!selectedLocation.tideStation) {
 
     document.getElementById("conditions").innerHTML = `
         <div class="mobile-context-location">📍 ${getLocationDisplayName(selectedLocation)}</div>
-        🌡 Air temperature:
+        ${translateString("Air temperature")}:
         ${formatTemperature(current.temperature_2m, 1)}
         <br>
-        🌊 Water temperature:
+        ${translateString("Water temperature")}:
         ${Number.isFinite(waterTemperature) ? formatTemperature(waterTemperature, 1) : "Unavailable"}
         <br>
-        💨 Wind speed:
+        ${translateString("Wind speed")}:
         ${formatWind(windSpeed, 1)}
         <br>
-        🧭 Wind direction:
+        ${translateString("Wind direction")}:
         ${getCompassDirection(windDirectionDegrees)}
         <br>
-        ☁ Conditions:
+        ${translateString("Conditions")}:
         ${getWeatherDescription(current.weather_code)}
         <br><br>
-        🌊 Wave height:
+        ${translateString("Wave height")}:
         ${Number.isFinite(waveHeight) ? formatWaveHeight(waveHeight, 2) : "Unavailable"}
         <br>
-        ⏱ Wave period:
+        ${translateString("Wave period")}:
         ${Number.isFinite(wavePeriod) ? wavePeriod + " s" : "Unavailable"}
         <br>
-        🌊 Swell direction:
+        ${translateString("Swell direction")}:
         ${Number.isFinite(waveDirection)
             ? getCompassDirection(waveDirection) + " (" + waveDirection.toFixed(0) + "°)"
             : "Unavailable"}
@@ -3091,7 +3091,7 @@ if (!selectedLocation.tideStation) {
 
     document.getElementById("recommendation").innerHTML = `
         <div class="mobile-context-location">📍 ${getLocationDisplayName(selectedLocation)}</div>
-        🏊 Swim Score:
+        🏊 ${translateString("Swim Score")}:
         ${swimScore}/100
         <br>
         ${rating}
@@ -3467,40 +3467,40 @@ if (!selectedLocation.tideStation) {
         ).innerHTML =
         `
         <div class="mobile-context-location">📍 ${getLocationDisplayName(selectedLocation)}</div>
-        🌡 Air temperature:
+        ${translateString("Air temperature")}:
         ${formatTemperature(current.temperature_2m, 1)}
         <br>
 
-        🌊 Water temperature:
+        ${translateString("Water temperature")}:
         ${formatTemperature(marineData.current.sea_surface_temperature, 1)}
         <br>
 
-        💨 Wind speed:
+        ${translateString("Wind speed")}:
         ${formatWind(current.wind_speed_10m, 1)}
         <br>
 
-        🧭 Wind direction:
+        ${translateString("Wind direction")}:
         ${getWindDirection(
             current.wind_direction_10m
         )}
         <br>
 
-        ☁ Conditions:
+        ${translateString("Conditions")}:
         ${getWeatherDescription(
             current.weather_code
         )}
 
         <br><br>
 
-        🌊 Wave height:
+        ${translateString("Wave height")}:
         ${formatWaveHeight(marineData.current.wave_height, 2)}
         <br>
 
-        ⏱ Wave period:
+        ${translateString("Wave period")}:
         ${marineData.current.wave_period} s
         <br>
 
-        🌊 Swell direction:
+        ${translateString("Swell direction")}:
         ${getCompassDirection(
             marineData.current.wave_direction
         )}
@@ -3723,16 +3723,16 @@ if (!selectedLocation.tideStation) {
         ).innerHTML =
         `
 
-        🏊 Swim Score:
+        🏊 ${translateString("Swim Score")}:
         ${swimScore}/100
 
         <br>
 
-        ${rating}
+        ${translateString(rating)}
 
         <br><br>
 
-        ${reasons.join("<br>")}
+        ${translateString(reasons.join("<br>"))}
 
         `;
 
@@ -3815,7 +3815,7 @@ async function loadSeaForecast(selectedLocation) {
     card.style.display = "block";
     const seaLocationLabel = document.getElementById("seaForecastLocation");
     if (seaLocationLabel) seaLocationLabel.textContent = ` — ${getLocationDisplayName(selectedLocation)}`;
-    daysContainer.innerHTML = "<p>⏳ Loading sea forecast...</p>";
+    daysContainer.innerHTML = `<p>⏳ ${translateString("Loading sea forecast...")}</p>`;
     detail.style.display = "none";
 
     try {
@@ -3923,12 +3923,12 @@ async function loadSeaForecast(selectedLocation) {
 
         daysContainer.innerHTML = forecast.map((day, index) => `
             <button type="button" class="forecast-day${index === 0 ? " active" : ""}" onclick="showSeaForecastDay(${index})">
-                <div class="forecast-day-name">${isForecastToday(day.date) ? "Today" : new Date(day.date + "T12:00:00").toLocaleDateString(getLanguageLocale(), {weekday:"short"})}</div>
+                <div class="forecast-day-name">${isForecastToday(day.date) ? "Today" : formatForecastWeekday(day.date, false)}</div>
                 <div class="forecast-day-date">${isForecastToday(day.date) ? "" : new Date(day.date + "T12:00:00").toLocaleDateString(getLanguageLocale(), {day:"numeric",month:"short"})}</div>
                 <div class="forecast-icon">${getWeatherIcon(day.weatherCode)}</div>
                 <div class="forecast-temp">${formatTemperature(day.maxTemp, 0)}</div>
                 <div class="forecast-wind">${formatWind(day.wind, 0)} ${getCompassDirection(day.direction)}</div>
-                <div class="forecast-condition">${day.assessment.rating.replace(" CONDITIONS", "")}</div>
+                <div class="forecast-condition">${translateRatingShort(day.assessment.rating)}</div>
             </button>
         `).join("");
 
@@ -3942,7 +3942,7 @@ async function loadSeaForecast(selectedLocation) {
         }
     } catch (error) {
         console.error("SEA FORECAST ERROR:", error);
-        daysContainer.innerHTML = "⚠️ Unable to load the sea forecast. Please try again.";
+        daysContainer.innerHTML = `⚠️ ${translateString("Unable to load the sea forecast. Please try again.")}`;
     }
 }
 
@@ -3962,10 +3962,8 @@ function showSeaForecastDay(index) {
     );
 
     const dateText = isForecastToday(day.date)
-        ? "Today"
-        : new Date(day.date + "T12:00:00").toLocaleDateString(getLanguageLocale(), {
-            weekday:"long", day:"numeric", month:"long"
-        });
+        ? translateString("Today")
+        : formatForecastWeekday(day.date, true);
 
     const isMobile = window.matchMedia("(max-width: 599px)").matches;
 
@@ -3975,15 +3973,15 @@ function showSeaForecastDay(index) {
             <div class="mobile-context-location">📍 ${getLocationDisplayName(state.location)}</div>
             <h3>${getWeatherIcon(day.weatherCode)} ${dateText}</h3>
             <div class="mobile-day-summary">
-                <strong>${day.assessment.rating}</strong>
-                ${day.assessment.reasons.slice(0, 2).join(" · ")}<br>
-                🏊 Swim score: <strong style="display:inline;font-size:17px;">${day.assessment.score}/100</strong>
+                <strong>${translateString(day.assessment.rating)}</strong>
+                ${translateString(day.assessment.reasons.slice(0, 2).join(" · "))}<br>
+                🏊 ${translateString("Swim Score")} : <strong style="display:inline;font-size:17px;">${day.assessment.score}/100</strong>
             </div>
             <div class="mobile-forecast-actions">
-                <button type="button" onclick="showMobileSeaTides(${index})">🌊 Show tides for this day</button>
-                <button type="button" onclick="openMobileTravelPlanner(${index})">🚗 Make travel plans</button>
-                <button type="button" class="secondary-action" onclick="showMobileSeaForecastDetails(${index})">ℹ️ Show full forecast details</button>
-                <button type="button" class="secondary-action close-action" onclick="closeSeaForecastDetail()">Close</button>
+                <button type="button" onclick="showMobileSeaTides(${index})">🌊 ${translateString("Show tides for this day")}</button>
+                <button type="button" onclick="openMobileTravelPlanner(${index})">🚗 ${translateString("Make travel plans")}</button>
+                <button type="button" class="secondary-action" onclick="showMobileSeaForecastDetails(${index})">ℹ️ ${translateString("Show full forecast details")}</button>
+                <button type="button" class="secondary-action close-action" onclick="closeSeaForecastDetail()">${translateString("Close")}</button>
             </div>
             <div id="mobileSeaExtraPanel"></div>
         `;
@@ -3992,23 +3990,23 @@ function showSeaForecastDay(index) {
             <div class="mobile-context-location">📍 ${getLocationDisplayName(state.location)}</div>
             <h3>${getWeatherIcon(day.weatherCode)} ${dateText}</h3>
             <div class="sea-forecast-summary">
-                <strong>${day.assessment.rating}</strong><br>
-                ${day.assessment.reasons.slice(0, 2).join(" · ")}<br><br>
-                ${day.assessment.reasons.slice(2).join("<br>")}
+                <strong>${translateString(day.assessment.rating)}</strong><br>
+                ${translateString(day.assessment.reasons.slice(0, 2).join(" · "))}<br><br>
+                ${translateString(day.assessment.reasons.slice(2).join("<br>"))}
             </div>
             <div class="forecast-metrics">
-                <div class="forecast-metric"><span class="forecast-metric-label">Air temperature</span><span class="forecast-metric-value">${formatTemperature(day.maxTemp, 0)} / ${formatTemperature(day.minTemp, 0)}</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Wind</span><span class="forecast-metric-value">${formatWind(day.wind, 1)} ${getCompassDirection(day.direction)}</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Gusts</span><span class="forecast-metric-value">${formatWind(day.gust, 1)}</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Rain probability</span><span class="forecast-metric-value">${day.rain}%</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Sea water</span><span class="forecast-metric-value">${formatTemperature(day.water, 1)}</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Weather</span><span class="forecast-metric-value">${getWeatherDescription(day.weatherCode)}</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Wave height</span><span class="forecast-metric-value">${formatWaveHeight(day.wave, 2)}</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Wave period</span><span class="forecast-metric-value">${day.period.toFixed(1)} s</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Swell direction</span><span class="forecast-metric-value">${getCompassDirection(day.waveDirection)} (${day.waveDirection.toFixed(0)}°)</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Air temperature")}</span><span class="forecast-metric-value">${formatTemperature(day.maxTemp, 0)} / ${formatTemperature(day.minTemp, 0)}</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Wind")}</span><span class="forecast-metric-value">${formatWind(day.wind, 1)} ${getCompassDirection(day.direction)}</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Gusts")}</span><span class="forecast-metric-value">${formatWind(day.gust, 1)}</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Rain probability")}</span><span class="forecast-metric-value">${day.rain}%</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Sea water")}</span><span class="forecast-metric-value">${formatTemperature(day.water, 1)}</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Weather")}</span><span class="forecast-metric-value">${getWeatherDescription(day.weatherCode)}</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Wave height")}</span><span class="forecast-metric-value">${formatWaveHeight(day.wave, 2)}</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Wave period")}</span><span class="forecast-metric-value">${day.period.toFixed(1)} s</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Swell direction")}</span><span class="forecast-metric-value">${getCompassDirection(day.waveDirection)} (${day.waveDirection.toFixed(0)}°)</span></div>
             </div>
             <div style="margin-top:14px;font-size:20px;font-weight:bold;color:#006994;">
-                🏊 Predicted Swim Score: ${day.assessment.score}/100
+                🏊 ${translateString("Predicted Swim Score")}: ${day.assessment.score}/100
             </div>
         `;
     }
@@ -4057,16 +4055,16 @@ function showMobileSeaForecastDetails(index) {
     const day = state.forecast[index];
     panel.innerHTML = `
         <div class="mobile-extra-panel">
-            <h4>📋 Full forecast</h4>
+            <h4>📋 ${translateString("Full forecast")}</h4>
             <div class="forecast-metrics">
-                <div class="forecast-metric"><span class="forecast-metric-label">Air temperature</span><span class="forecast-metric-value">${formatTemperature(day.maxTemp, 0)} / ${formatTemperature(day.minTemp, 0)}</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Wind</span><span class="forecast-metric-value">${formatWind(day.wind, 1)} ${getCompassDirection(day.direction)}</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Gusts</span><span class="forecast-metric-value">${formatWind(day.gust, 1)}</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Rain probability</span><span class="forecast-metric-value">${day.rain}%</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Sea water</span><span class="forecast-metric-value">${formatTemperature(day.water, 1)}</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Wave height</span><span class="forecast-metric-value">${formatWaveHeight(day.wave, 2)}</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Wave period</span><span class="forecast-metric-value">${day.period.toFixed(1)} s</span></div>
-                <div class="forecast-metric"><span class="forecast-metric-label">Swell direction</span><span class="forecast-metric-value">${getCompassDirection(day.waveDirection)} (${day.waveDirection.toFixed(0)}°)</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Air temperature")}</span><span class="forecast-metric-value">${formatTemperature(day.maxTemp, 0)} / ${formatTemperature(day.minTemp, 0)}</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Wind")}</span><span class="forecast-metric-value">${formatWind(day.wind, 1)} ${getCompassDirection(day.direction)}</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Gusts")}</span><span class="forecast-metric-value">${formatWind(day.gust, 1)}</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Rain probability")}</span><span class="forecast-metric-value">${day.rain}%</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Sea water")}</span><span class="forecast-metric-value">${formatTemperature(day.water, 1)}</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Wave height")}</span><span class="forecast-metric-value">${formatWaveHeight(day.wave, 2)}</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Wave period")}</span><span class="forecast-metric-value">${day.period.toFixed(1)} s</span></div>
+                <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Swell direction")}</span><span class="forecast-metric-value">${getCompassDirection(day.waveDirection)} (${day.waveDirection.toFixed(0)}°)</span></div>
             </div>
         </div>`;
 }
@@ -4100,7 +4098,7 @@ function openMobileTravelPlanner(index) {
             <button type="button" class="mobile-forecast-close"
                     onclick="closeMobileTideChoice()" aria-label="Close">✕</button>
             <div class="mobile-context-location">📍 ${getLocationDisplayName(state.location)}</div>
-            <h3>🚗 Plan your swim</h3>
+            <h3>🚗 ${translateString("Plan your swim")}</h3>
             <p><strong>${dateText}</strong></p>
             <p>Select the <strong>high tide</strong> you want to swim for:</p>
             <select id="mobileTravelTideSelect">
@@ -4257,7 +4255,7 @@ async function loadLakeForecast(selectedLocation, currentConditions = null) {
     card.style.display = "block";
     const lakeLocationLabel = document.getElementById("lakeForecastLocation");
     if (lakeLocationLabel) lakeLocationLabel.textContent = ` — ${getLocationDisplayName(selectedLocation)}`;
-    daysContainer.innerHTML = "<p>⏳ Loading lake forecast...</p>";
+    daysContainer.innerHTML = `<p>⏳ ${translateString("Loading lake forecast...")}</p>`;
     detail.style.display = "none";
 
     try {
@@ -4330,12 +4328,12 @@ async function loadLakeForecast(selectedLocation, currentConditions = null) {
 
         daysContainer.innerHTML = forecast.map((day, index) => `
             <button type="button" class="forecast-day${index === 0 ? " active" : ""}" onclick="showLakeForecastDay(${index})">
-                <div class="forecast-day-name">${isForecastToday(day.date) ? "Today" : new Date(day.date + "T12:00:00").toLocaleDateString(getLanguageLocale(), {weekday:"short"})}</div>
+                <div class="forecast-day-name">${isForecastToday(day.date) ? "Today" : formatForecastWeekday(day.date, false)}</div>
                 <div class="forecast-day-date">${isForecastToday(day.date) ? "" : new Date(day.date + "T12:00:00").toLocaleDateString(getLanguageLocale(), {day:"numeric",month:"short"})}</div>
                 <div class="forecast-icon">${getWeatherIcon(day.weatherCode)}</div>
                 <div class="forecast-temp">${formatTemperature(day.maxTemp, 0)}</div>
                 <div class="forecast-wind">${formatWind(day.wind, 0)} ${getCompassDirection(day.direction)}</div>
-                <div class="forecast-condition">${day.assessment.condition}</div>
+                <div class="forecast-condition">${translateString(day.assessment.condition)}</div>
             </button>
         `).join("");
 
@@ -4351,7 +4349,7 @@ async function loadLakeForecast(selectedLocation, currentConditions = null) {
 
     } catch (error) {
         console.error("LAKE FORECAST ERROR:", error);
-        daysContainer.innerHTML = "⚠️ Unable to load the lake forecast. Please try again.";
+        daysContainer.innerHTML = `⚠️ ${translateString("Unable to load the lake forecast. Please try again.")}`;
     }
 }
 
@@ -4368,10 +4366,8 @@ function showLakeForecastDay(index) {
     );
 
     const dateText = isForecastToday(day.date)
-        ? "Today"
-        : new Date(day.date + "T12:00:00").toLocaleDateString(getLanguageLocale(), {
-            weekday:"long", day:"numeric", month:"long"
-        });
+        ? translateString("Today")
+        : formatForecastWeekday(day.date, true);
 
     const isMobile = window.matchMedia("(max-width: 599px)").matches;
 
@@ -4380,22 +4376,22 @@ function showLakeForecastDay(index) {
         <div class="mobile-context-location">📍 ${getLocationDisplayName(state.location)}</div>
         <h3>${getWeatherIcon(day.weatherCode)} ${dateText}</h3>
         <div class="lake-summary">
-            <strong>${day.assessment.condition}</strong><br>
-            ${day.assessment.impact}<br><br>
-            ${day.assessment.advice}
+            <strong>${translateString(day.assessment.condition)}</strong><br>
+            ${translateString(day.assessment.impact)}<br><br>
+            ${translateString(day.assessment.advice)}
         </div>
         <div class="forecast-metrics">
-            <div class="forecast-metric"><span class="forecast-metric-label">Air temperature</span><span class="forecast-metric-value">${formatTemperature(day.maxTemp, 0)} / ${formatTemperature(day.minTemp, 0)}</span></div>
-            <div class="forecast-metric"><span class="forecast-metric-label">Wind</span><span class="forecast-metric-value">${formatWind(day.wind, 0)} ${getCompassDirection(day.direction)}</span></div>
-            <div class="forecast-metric"><span class="forecast-metric-label">Gusts</span><span class="forecast-metric-value">${formatWind(day.gust, 0)}</span></div>
-            <div class="forecast-metric"><span class="forecast-metric-label">Rain probability</span><span class="forecast-metric-value">${day.rain ?? "—"}%</span></div>
-            <div class="forecast-metric"><span class="forecast-metric-label">Lake water</span><span class="forecast-metric-value">${state.waterTemp !== null ? formatTemperature(state.waterTemp, 1) : "Unavailable"}</span></div>
-            <div class="forecast-metric"><span class="forecast-metric-label">Weather</span><span class="forecast-metric-value">${getWeatherDescription(day.weatherCode)}</span></div>
+            <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Air temperature")}</span><span class="forecast-metric-value">${formatTemperature(day.maxTemp, 0)} / ${formatTemperature(day.minTemp, 0)}</span></div>
+            <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Wind")}</span><span class="forecast-metric-value">${formatWind(day.wind, 0)} ${getCompassDirection(day.direction)}</span></div>
+            <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Gusts")}</span><span class="forecast-metric-value">${formatWind(day.gust, 0)}</span></div>
+            <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Rain probability")}</span><span class="forecast-metric-value">${day.rain ?? "—"}%</span></div>
+            <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Lake water")}</span><span class="forecast-metric-value">${state.waterTemp !== null ? formatTemperature(state.waterTemp, 1) : "Unavailable"}</span></div>
+            <div class="forecast-metric"><span class="forecast-metric-label">${translateString("Weather")}</span><span class="forecast-metric-value">${getWeatherDescription(day.weatherCode)}</span></div>
         </div>
 
         ${isMobile ? `
             <div class="mobile-forecast-actions lake-mobile-actions">
-                <button type="button" class="secondary-action close-action" onclick="closeLakeForecastDetail()">Close</button>
+                <button type="button" class="secondary-action close-action" onclick="closeLakeForecastDetail()">${translateString("Close")}</button>
             </div>
         ` : ""}
     `;
@@ -4774,7 +4770,7 @@ async function predictSwimConditions() {
             <strong>${formatTemperature(temperature, 1)}</strong>
             <br>
 
-            🌊 Water temperature:
+            ${translateString("Water temperature")}:
             <strong>${formatTemperature(waterTemperature, 1)}</strong>
             <br>
 
@@ -4802,7 +4798,7 @@ async function predictSwimConditions() {
 
             <br><br>
 
-            🌊 Wave height:
+            ${translateString("Wave height")}:
             <strong>${formatWaveHeight(waveHeight, 2)}</strong>
             <br>
 
@@ -4817,7 +4813,7 @@ async function predictSwimConditions() {
 
             <div class="prediction-score">
 
-                🏊 Predicted Swim Score:
+                🏊 ${translateString("Predicted Swim Score")}:
                 ${swimScore}/100
 
             </div>
@@ -5783,6 +5779,27 @@ const extraLanguageText = {
 Object.keys(extraLanguageText).forEach(lang => {
     if (languageText[lang]) Object.assign(languageText[lang], extraLanguageText[lang]);
 });
+// Additional labels used by dynamically generated forecast/condition cards.
+const dynamicLabelTranslations = {
+  zh: {"Lake water temperature":"湖水温度","Weather":"天气","Sheltered side":"避风一侧"},
+  hi: {"Lake water temperature":"झील के पानी का तापमान","Weather":"मौसम","Sheltered side":"आश्रय वाला किनारा"},
+  es: {"Lake water temperature":"Temperatura del agua del lago","Weather":"Tiempo","Sheltered side":"Lado protegido"},
+  fr: {"Lake water temperature":"Température de l’eau du lac","Weather":"Météo","Sheltered side":"Côté abrité"}
+};
+Object.keys(dynamicLabelTranslations).forEach(lang => {
+  if (languageText[lang]) Object.assign(languageText[lang], dynamicLabelTranslations[lang]);
+});
+const dynamicUiTranslations = {
+  zh: {"Show tides for this day":"显示当天潮汐","Make travel plans":"制定行程","Show full forecast details":"显示完整预报详情","Plan your swim":"规划您的游泳","Predict Swim Conditions":"预测游泳条件"},
+  hi: {"Show tides for this day":"इस दिन का ज्वार दिखाएँ","Make travel plans":"यात्रा की योजना बनाएँ","Show full forecast details":"पूरा पूर्वानुमान दिखाएँ","Plan your swim":"अपनी तैराकी की योजना बनाएँ","Predict Swim Conditions":"तैराकी की स्थितियों का अनुमान लगाएँ"},
+  es: {"Show tides for this day":"Mostrar las mareas de este día","Make travel plans":"Planificar el viaje","Show full forecast details":"Mostrar el pronóstico completo","Plan your swim":"Planificar tu natación","Predict Swim Conditions":"Predecir las condiciones de natación"},
+  fr: {"Show tides for this day":"Afficher les marées de ce jour","Make travel plans":"Planifier le trajet","Show full forecast details":"Afficher les prévisions complètes","Plan your swim":"Planifier votre baignade","Predict Swim Conditions":"Prévoir les conditions de baignade"}
+};
+Object.keys(dynamicUiTranslations).forEach(lang => {
+  if (languageText[lang]) Object.assign(languageText[lang], dynamicUiTranslations[lang]);
+});
+
+
 
 function translateString(value) {
     const lang = getLanguage();
@@ -5823,6 +5840,33 @@ function getLanguageLocale() {
         es: "es-ES",
         fr: "fr-FR"
     }[getLanguage()] || "en-IE";
+}
+
+function translateRating(rating) {
+    return translateString(rating);
+}
+
+function translateRatingShort(rating) {
+    const key = String(rating || "").toUpperCase();
+    if (key.includes("EXCELLENT")) return translateString("Excellent conditions").replace(/\s+conditions?$/i, "");
+    if (key.includes("GOOD")) return translateString("Good conditions").replace(/\s+conditions?$/i, "");
+    if (key.includes("CHALLENGING")) return translateString("Challenging conditions").replace(/\s+conditions?$/i, "");
+    if (key.includes("POOR")) return translateString("Poor conditions").replace(/\s+conditions?$/i, "");
+    return translateString(rating);
+}
+
+function formatForecastWeekday(date, long = false) {
+    if (isForecastToday(date)) return translateString("Today");
+    const dayIndex = new Date(date + "T12:00:00").getDay();
+    const short = {
+        en: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+        zh: ["周日","周一","周二","周三","周四","周五","周六"],
+        hi: ["रवि","सोम","मंगल","बुध","गुरु","शुक्र","शनि"],
+        es: ["dom","lun","mar","mié","jue","vie","sáb"],
+        fr: ["dim.","lun.","mar.","mer.","jeu.","ven.","sam."]
+    };
+    if (!long) return (short[getLanguage()] || short.en)[dayIndex];
+    return new Date(date + "T12:00:00").toLocaleDateString(getLanguageLocale(), {weekday:"long", day:"numeric", month:"long"});
 }
 
 function translatePage() {
