@@ -2206,7 +2206,7 @@ body.dark-theme .sea-forecast-summary {
             <div class="release-modal-header">
                 <div>
                     <div class="release-eyebrow">🆕 <span>WHAT'S NEW</span></div>
-                    <h2 id="releaseTitle">Open Water Swim Planner — Version 2.6.0</h2>
+                    <h2 id="releaseTitle">Open Water Swim Planner — Version 2.6.1</h2>
                 </div>
                 <button type="button" class="guide-close" onclick="closeReleaseNotes()" aria-label="Close release notes">×</button>
             </div>
@@ -6039,7 +6039,7 @@ function showSeaTide(index) {
 /* =========================
    WHAT'S NEW / RELEASE NOTES
    ========================= */
-const SWIM_RELEASE_VERSION = "2.6.0";
+const SWIM_RELEASE_VERSION = "2.6.1";
 const SWIM_RELEASE_KEY = "swimPlannerLastSeenRelease";
 
 function openReleaseNotes(markSeen = false) {
@@ -6065,6 +6065,10 @@ function showReleaseNotesIfNeeded() {
 }
 
 function initialiseApp() {
+    // Release notes are checked immediately so the first-open notice is
+    // independent of weather/API loading.
+    showReleaseNotesIfNeeded();
+
     loadLocations();
 
     const locationSelect =
@@ -6074,9 +6078,7 @@ function initialiseApp() {
         checkConditions();
     }
 
-    // Show the current release notes once for this browser/device.
     // After the visitor dismisses them, they remain available from the app menu.
-    showReleaseNotesIfNeeded();
 }
 
 if (document.readyState === "loading") {
