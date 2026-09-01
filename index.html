@@ -2143,10 +2143,10 @@ body.dark-theme .sea-forecast-summary {
                 🌐 <span>Language</span>
                 <select id="languageSelect" aria-label="Choose language" onclick="event.stopPropagation()" onchange="changeLanguage(this.value)">
                     <option value="en">English</option>
-                    <option value="es">Español</option>
                     <option value="zh">中文</option>
                     <option value="hi">हिन्दी</option>
-                    <option value="ar">العربية</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
                 </select>
             </label>
         </div>
@@ -5412,14 +5412,32 @@ function translatePage() {
     while (walker.nextNode()) nodes.push(walker.currentNode);
 
     nodes.forEach(node => {
-        const translated = translateString(node.nodeValue);
-        if (translated !== node.nodeValue) node.nodeValue = translated;
+        // Always translate from the original English source text. This makes
+        // switching between languages work in both directions.
+        if (typeof node.__swimOriginalText !== "string") {
+            node.__swimOriginalText = node.nodeValue;
+        }
+
+        const source = node.__swimOriginalText;
+        const translated = translateString(source);
+
+        if (node.nodeValue !== translated) {
+            node.nodeValue = translated;
+        }
     });
 
-    // Translate select options separately.
+    // Translate select options separately, while retaining their original text.
     document.querySelectorAll("option").forEach(option => {
-        const translated = translateString(option.textContent);
-        if (translated !== option.textContent) option.textContent = translated;
+        if (typeof option.__swimOriginalText !== "string") {
+            option.__swimOriginalText = option.textContent;
+        }
+
+        const source = option.__swimOriginalText;
+        const translated = translateString(source);
+
+        if (option.textContent !== translated) {
+            option.textContent = translated;
+        }
     });
 
     updateLanguageMenu();
