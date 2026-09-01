@@ -1153,6 +1153,46 @@ body.dark-theme .language-menu-item select {
 .forecast-metric-label { display:block; font-size: 11px; color:#71818c; }
 .forecast-metric-value { display:block; margin-top:3px; font-weight:700; }
 
+/* =========================
+   WHAT'S NEW RELEASE NOTES
+   ========================= */
+.release-modal { display:none; position:fixed; inset:0; z-index:600; }
+.release-modal.open { display:block; }
+.release-modal-backdrop { position:absolute; inset:0; background:rgba(4,18,29,.72); }
+.release-modal-panel {
+    position:relative;
+    width:min(620px, calc(100vw - 32px));
+    max-height:calc(100vh - 32px);
+    overflow:auto;
+    margin:8vh auto 0;
+    padding:28px;
+    background:white;
+    color:#263f50;
+    border-radius:18px;
+    box-shadow:0 24px 70px rgba(0,0,0,.35);
+}
+.release-modal-header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; }
+.release-eyebrow { color:#006994; font-size:12px; font-weight:800; letter-spacing:1.2px; margin-bottom:6px; }
+.release-modal-header h2 { margin:0; color:#006994; font-size:24px; line-height:1.25; }
+.release-intro { margin:20px 0 14px; line-height:1.6; }
+.release-list { list-style:none; padding:0; margin:0; display:grid; gap:12px; }
+.release-list li { display:flex; gap:12px; padding:13px 14px; border:1px solid #d8e8f0; border-radius:12px; background:#f7fbfd; line-height:1.5; }
+.release-list strong { color:#006994; }
+.release-icon { font-size:21px; flex:0 0 26px; text-align:center; }
+.release-footer { display:flex; align-items:center; justify-content:space-between; gap:15px; margin-top:22px; padding-top:16px; border-top:1px solid #d8e8f0; font-size:14px; }
+.release-ok { border:0; border-radius:9px; padding:10px 20px; background:#006994; color:white; font-weight:800; cursor:pointer; }
+.release-ok:hover { filter:brightness(1.08); }
+body.dark-theme .release-modal-panel { background:#202e39; color:#e1eaf0; }
+body.dark-theme .release-eyebrow, body.dark-theme .release-modal-header h2, body.dark-theme .release-list strong { color:#79d1ff; }
+body.dark-theme .release-list li { background:#263642; border-color:#435764; }
+body.dark-theme .release-footer { border-color:#435764; }
+@media (max-width:599px) {
+    .release-modal-panel { margin:4vh auto 0; padding:20px; }
+    .release-modal-header h2 { font-size:20px; }
+    .release-footer { align-items:stretch; flex-direction:column; }
+    .release-ok { width:100%; }
+}
+
 .guide-modal { display:none; position:fixed; inset:0; z-index:500; }
 .guide-modal.open { display:block; }
 .guide-modal-backdrop { position:absolute; inset:0; background:rgba(4,18,29,.65); }
@@ -2126,8 +2166,11 @@ body.dark-theme .sea-forecast-summary {
             <button type="button" class="menu-item" onclick="openGuide()">
                 📖 <span>How to Use</span>
             </button>
+            <button type="button" class="menu-item" onclick="openReleaseNotes()">
+                🆕 <span>What's New</span>
+            </button>
             <div class="menu-item menu-version">
-                ℹ️ <span>App Version <strong>2.5.4</strong></span>
+                ℹ️ <span>App Version <strong>2.6.0</strong></span>
             </div>
             <button type="button" class="menu-item" id="themeMenuButton" onclick="toggleTheme()">
                 🌙 <span>Dark Theme</span>
@@ -2156,6 +2199,30 @@ body.dark-theme .sea-forecast-summary {
 
 
 
+
+    <div class="release-modal" id="releaseModal" aria-hidden="true">
+        <div class="release-modal-backdrop" onclick="closeReleaseNotes()"></div>
+        <div class="release-modal-panel" role="dialog" aria-modal="true" aria-labelledby="releaseTitle">
+            <div class="release-modal-header">
+                <div>
+                    <div class="release-eyebrow">🆕 <span>WHAT'S NEW</span></div>
+                    <h2 id="releaseTitle">Open Water Swim Planner — Version 2.6.0</h2>
+                </div>
+                <button type="button" class="guide-close" onclick="closeReleaseNotes()" aria-label="Close release notes">×</button>
+            </div>
+            <p class="release-intro">Here’s what’s new in this release:</p>
+            <ul class="release-list">
+                <li><span class="release-icon">🌍</span><div><strong>New languages</strong><br>English, Chinese, Hindi, Spanish and French are now available.</div></li>
+                <li><span class="release-icon">📍</span><div><strong>More swim locations</strong><br>New lake and Tahiti locations have been added.</div></li>
+                <li><span class="release-icon">🌦️</span><div><strong>Improved forecast information</strong><br>Forecast details, conditions and swim recommendations have been improved.</div></li>
+                <li><span class="release-icon">📱</span><div><strong>Improved mobile experience</strong><br>Forecast and information panels have been refined for easier use on phones and tablets.</div></li>
+            </ul>
+            <div class="release-footer">
+                <span>Thanks for using Open Water Swim Planner. 🌊</span>
+                <button type="button" class="release-ok" onclick="closeReleaseNotes(true)">Got it</button>
+            </div>
+        </div>
+    </div>
 
     <div class="guide-modal" id="guideModal" aria-hidden="true">
     <div class="guide-modal-backdrop" onclick="closeGuide()"></div>
@@ -2512,6 +2579,8 @@ function changeUnits(value) {
     if (locationSelect && locationSelect.value) {
         checkConditions();
     }
+
+    showReleaseNotesIfNeeded();
 }
 
 function updateUnitsMenu() {
@@ -5966,6 +6035,34 @@ function showSeaTide(index) {
     `;
 }
 
+/* =========================
+   WHAT'S NEW / RELEASE NOTES
+   ========================= */
+const SWIM_RELEASE_VERSION = "2.6.0";
+const SWIM_RELEASE_KEY = "swimPlannerLastSeenRelease";
+
+function openReleaseNotes(markSeen = false) {
+    const modal = document.getElementById("releaseModal");
+    if (!modal) return;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    if (markSeen) localStorage.setItem(SWIM_RELEASE_KEY, SWIM_RELEASE_VERSION);
+}
+
+function closeReleaseNotes(markSeen = true) {
+    const modal = document.getElementById("releaseModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    if (markSeen) localStorage.setItem(SWIM_RELEASE_KEY, SWIM_RELEASE_VERSION);
+}
+
+function showReleaseNotesIfNeeded() {
+    if (localStorage.getItem(SWIM_RELEASE_KEY) !== SWIM_RELEASE_VERSION) {
+        setTimeout(() => openReleaseNotes(), 700);
+    }
+}
+
 function initialiseApp() {
     loadLocations();
 
@@ -5982,6 +6079,14 @@ if (document.readyState === "loading") {
 } else {
     initialiseApp();
 }
+
+
+document.addEventListener("keydown", function(event) {
+    if (event.key === "Escape") {
+        const releaseModal = document.getElementById("releaseModal");
+        if (releaseModal && releaseModal.classList.contains("open")) closeReleaseNotes();
+    }
+});
 
 
 /* =========================
