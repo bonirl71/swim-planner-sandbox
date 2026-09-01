@@ -2526,21 +2526,21 @@ function updateUnitsMenu() {
 
 function getWeatherDescription(code) {
 
-    if (code === 0) return "Clear sky ☀️";
+    if (code === 0) return translateString("Clear sky ☀️");
 
-    if ([1,2,3].includes(code)) return "Cloudy ☁️";
+    if ([1,2,3].includes(code)) return translateString("Cloudy ☁️");
 
-    if ([45,48].includes(code)) return "Fog 🌫️";
+    if ([45,48].includes(code)) return translateString("Fog 🌫️");
 
-    if (code >= 51 && code <= 67) return "Rain 🌧️";
+    if (code >= 51 && code <= 67) return translateString("Rain 🌧️");
 
-    if (code >= 71 && code <= 77) return "Snow ❄️";
+    if (code >= 71 && code <= 77) return translateString("Snow ❄️");
 
-    if (code >= 80 && code <= 82) return "Rain showers 🌦️";
+    if (code >= 80 && code <= 82) return translateString("Rain showers 🌦️");
 
-    if (code >= 95) return "Thunderstorm ⛈️";
+    if (code >= 95) return translateString("Thunderstorm ⛈️");
 
-    return "Unknown";
+    return translateString("Unknown");
 
 }
 
@@ -2562,7 +2562,7 @@ function getWindDirection(degrees) {
         "North-West"
     ];
 
-    return directions[Math.round(degrees / 45) % 8];
+    return translateString(directions[Math.round(degrees / 45) % 8]);
 
 }
 
@@ -5370,6 +5370,342 @@ function updateLanguageMenu() {
     if (select) select.value = getLanguage();
 }
 
+
+const extraLanguageText = {
+    "zh": {
+        "Sea Swim Planner": "海泳规划器",
+        "Open Water Swim Planner": "开放水域游泳规划器",
+        "Sea & lake conditions, forecasts and swim planning": "海洋与湖泊状况、预报和游泳规划",
+        "7-DAY OUTLOOK": "7天预报",
+        "SWIM LOCATION": "游泳地点",
+        "How to Use the Swim Planner": "游泳规划器使用指南",
+        "Choose your swim location.": "选择您的游泳地点。",
+        "Youghal Quay is the default location when the app opens. Select another sea or lake location from the location menu if required.": "应用打开时默认选择Youghal Quay。如有需要，请从地点菜单选择其他海边或湖泊地点。",
+        "View the forecast.": "查看预报。",
+        "The forecast loads automatically when you choose a location. The 7-day forecast is the main view.": "选择地点后预报会自动加载。7天预报是主要视图。",
+        "Select a day.": "选择日期。",
+        "Tap a forecast day to open the information for that day. If the selected day is today, it is shown as": "点击预报日期查看当天信息。如果选择的是今天，会显示为",
+        "Current conditions.": "当前状况。",
+        "Current conditions and the Swim Recommendation are kept out of the main phone view to reduce clutter. They remain available on the main desktop view.": "为了减少手机页面的杂乱，当前状况和游泳建议不会显示在手机主视图中，但会在桌面版主视图中提供。",
+        "Sea locations — Tide Info.": "海边地点 — 潮汐信息。",
+        "When viewing a sea forecast day, choose the tide option if you want tide information for that date.": "查看海洋预报日期时，如需当天潮汐信息，请选择潮汐选项。",
+        "Sea locations — Make Travel Plans.": "海边地点 — 制定行程。",
+        "Make travel plans": "制定行程",
+        "for the forecast day. You will first be asked to choose the high tide you want to swim for. After selecting the tide, continue to the Journey Planner to see the travel plan.": "查看预报日期。系统会先要求您选择计划游泳时段的高潮。选择潮汐后，进入行程规划查看行程。",
+        "Lake locations.": "湖泊地点。",
+        "Lake forecasts do not use sea tide information. Select a forecast day to see the lake information for that date.": "湖泊预报不使用海洋潮汐信息。选择预报日期即可查看当天湖泊信息。",
+        "Close a pop-up.": "关闭弹出窗口。",
+        "Use the Close button or X when available.": "如有关闭按钮或X，请使用它。",
+        "Desktop PC": "桌面电脑",
+        "Youghal Quay is the default location when the app opens. Selecting a location automatically loads its current conditions, Swim Recommendation and forecast.": "应用打开时默认选择Youghal Quay。选择地点后会自动加载当前状况、游泳建议和预报。",
+        "The 7-day forecast is displayed for the selected location. Select a forecast day to view the detailed information for that day. If the selected day is today, it is shown as": "所选地点会显示7天预报。选择某天即可查看详细信息。如果选择的是今天，会显示为",
+        "For sea locations, use": "对于海边地点，请使用",
+        "when you want to see the tide information. It opens in a separate panel so the main forecast screen stays uncluttered.": "查看潮汐信息。潮汐信息会在独立面板中打开，以保持主预报页面整洁。",
+        "Sea locations — Journey Planner.": "海边地点 — 行程规划。",
+        "Use": "使用",
+        "when you want to open the Journey Planner in a separate panel.": "打开独立的行程规划面板。",
+        "Close information panels.": "关闭信息面板。",
+        "Use the X/Close control in the panel. You can also click outside the panel to close it.": "使用面板中的X/关闭控件。也可以点击面板外部关闭。",
+        "Lake locations do not display the sea Tide Info or Journey Planner buttons. The lake forecast is presented using lake-specific information.": "湖泊地点不会显示海洋潮汐信息或行程规划按钮。湖泊预报使用针对湖泊的信息。",
+        "Units.": "单位。",
+        "Use the Units option in the header menu to switch between Metric (km, °C, metres) and Imperial (miles, °F, feet). Wind speed changes between m/s and mph.": "使用顶部菜单中的单位选项，在公制（km、°C、米）和英制（英里、°F、英尺）之间切换。风速会在m/s和mph之间切换。",
+        "Light / Dark theme.": "浅色/深色主题。",
+        "Use the theme option in the header to switch themes. Dark theme is the default.": "使用顶部的主题选项切换主题。默认使用深色主题。",
+        "App information.": "应用信息。",
+        "Open the menu to access this guide and see the current App Version.": "打开菜单查看本指南和当前应用版本。",
+        "Forecast guidance only": "仅供预报参考",
+        "Forecast conditions can change, particularly several days in advance. Predictions are a guide only and should not be relied upon as an assessment of swimming safety. Always check the latest forecast and local conditions before swimming.": "预报状况可能会变化，尤其是提前数天的预报。预测仅供参考，不应作为游泳安全评估的依据。游泳前请务必查看最新预报和当地状况。",
+        "Air temperature": "气温",
+        "Water temperature": "水温",
+        "Wind speed": "风速",
+        "Wind direction": "风向",
+        "Gusts": "阵风",
+        "Rain probability": "降雨概率",
+        "Wave height": "浪高",
+        "Wave period": "浪周期",
+        "Wave direction": "浪向",
+        "Swell direction": "涌浪方向",
+        "Wind": "风",
+        "Conditions": "天气状况",
+        "Clear sky ☀️": "晴空 ☀️",
+        "Cloudy ☁️": "多云 ☁️",
+        "Fog 🌫️": "雾 🌫️",
+        "Rain 🌧️": "下雨 🌧️",
+        "Snow ❄️": "降雪 ❄️",
+        "Rain showers 🌦️": "阵雨 🌦️",
+        "Thunderstorm ⛈️": "雷暴 ⛈️",
+        "Unknown": "未知",
+        "North": "北风",
+        "North-East": "东北风",
+        "East": "东风",
+        "South-East": "东南风",
+        "South": "南风",
+        "South-West": "西南风",
+        "West": "西风",
+        "North-West": "西北风",
+        "Selected high tide": "所选高潮",
+        "High Tide": "高潮",
+        "Low Tide": "低潮",
+        "Tides for": "潮汐 —",
+        "Full forecast": "完整预报",
+        "Plan your swim": "规划您的游泳",
+        "Predicted Swim Conditions": "预测游泳条件",
+        "Predicted Swim Score": "预测游泳评分",
+        "Strong wind may make conditions significantly rougher than normal.": "强风可能使状况明显比平时更恶劣。",
+        "Moderate wind — expect increased chop.": "中等风力——预计浪花会增加。",
+        "CALM TO SLIGHT CHOP": "平静至轻微浪涌",
+        "INCREASING CHOP": "浪涌增加",
+        "CHOPPY": "有浪",
+        "SLIGHTLY CHOPPY": "轻微有浪",
+        "CHOPPY / STRONG WIND": "有浪 / 强风",
+        "Youghal side: Calm · Tomona side: A little choppier": "Youghal一侧：平静 · Tomona一侧：稍有浪",
+        "Youghal side: A little choppier · Tomona side: Calm": "Youghal一侧：稍有浪 · Tomona一侧：平静",
+        "Both sides becoming more exposed": "两侧逐渐更加暴露",
+        "Both sides exposed to chop": "两侧都有浪",
+        "Both sides somewhat sheltered": "两侧相对有遮蔽",
+        "Generally sheltered with some chop": "总体有遮蔽，但有些浪",
+        "Youghal side: Generally sheltered · Tomona side: Some exposure": "Youghal一侧：总体有遮蔽 · Tomona一侧：部分暴露",
+        "Youghal side is the better option in a southerly wind.": "南风时Youghal一侧更适合。",
+        "Tomona side is the better option in a northerly wind.": "北风时Tomona一侧更适合。",
+        "South-westerly wind creates increasing chop.": "西南风会增加浪涌。",
+        "Westerly wind creates chop across the lake. Swimming towards Caddy's Point and Garrykennedy means swimming into the wind.": "西风会使湖面产生浪涌。向Caddy's Point和Garrykennedy方向游泳意味着迎风游。",
+        "North-westerly wind creates increasing chop, particularly on exposed sections.": "西北风会增加浪涌，尤其是在暴露区域。",
+        "Easterly wind is generally more sheltered than westerly, but some chop is expected.": "东风通常比西风更有遮蔽，但仍可能有些浪。",
+        "North-easterly wind should produce relatively modest chop.": "东北风通常只会产生较小的浪涌。",
+        "South-easterly wind should leave the Youghal side relatively sheltered.": "东南风时Youghal一侧通常较有遮蔽。",
+        "Small waves": "小浪",
+        "Moderate waves": "中浪",
+        "Large waves": "大浪",
+        "Comfortable water temperature": "舒适的水温",
+        "Cold water": "冷水",
+        "Very cold water": "非常冷的水",
+        "Light wind": "微风",
+        "Moderate wind": "中等风力",
+        "Strong wind": "强风",
+        "Sheltered side": "有遮蔽的一侧",
+        "Check swim conditions first...": "请先检查游泳状况...",
+        "Unable to get your location. Please allow location access.": "无法获取您的位置。请允许位置访问。",
+        "Location access was denied.": "位置访问被拒绝。",
+        "Your location is unavailable.": "无法获取您的位置。",
+        "Location request timed out.": "位置请求超时。",
+        "Unable to calculate the journey.": "无法计算行程。",
+        "Journey time is an estimate and does not include traffic, stops or delays.": "行程时间仅为估算，不包括交通、停车或延误。"
+    },
+    "es": {
+        "Sea Swim Planner": "Planificador de natación en el mar",
+        "Open Water Swim Planner": "Planificador de natación en aguas abiertas",
+        "Sea & lake conditions, forecasts and swim planning": "Condiciones del mar y lagos, pronósticos y planificación de natación",
+        "7-DAY OUTLOOK": "PRONÓSTICO DE 7 DÍAS",
+        "SWIM LOCATION": "LUGAR DE NATACIÓN",
+        "Choose your swim location.": "Elige tu lugar de natación.",
+        "View the forecast.": "Ver el pronóstico.",
+        "Select a day.": "Selecciona un día.",
+        "Current conditions.": "Condiciones actuales.",
+        "Close a pop-up.": "Cerrar una ventana emergente.",
+        "Use the Close button or X when available.": "Usa el botón Cerrar o X cuando esté disponible.",
+        "Desktop PC": "PC de escritorio",
+        "Air temperature": "Temperatura del aire",
+        "Water temperature": "Temperatura del agua",
+        "Wind speed": "Velocidad del viento",
+        "Wind direction": "Dirección del viento",
+        "Gusts": "Ráfagas",
+        "Rain probability": "Probabilidad de lluvia",
+        "Wave height": "Altura de las olas",
+        "Wave period": "Período de las olas",
+        "Wave direction": "Dirección de las olas",
+        "Swell direction": "Dirección del oleaje",
+        "Wind": "Viento",
+        "Conditions": "Condiciones meteorológicas",
+        "Clear sky ☀️": "Cielo despejado ☀️",
+        "Cloudy ☁️": "Nublado ☁️",
+        "Fog 🌫️": "Niebla 🌫️",
+        "Rain 🌧️": "Lluvia 🌧️",
+        "Snow ❄️": "Nieve ❄️",
+        "Rain showers 🌦️": "Chubascos 🌦️",
+        "Thunderstorm ⛈️": "Tormenta ⛈️",
+        "Unknown": "Desconocido",
+        "Selected high tide": "Marea alta seleccionada",
+        "High Tide": "Marea alta",
+        "Low Tide": "Marea baja",
+        "Full forecast": "Pronóstico completo",
+        "Plan your swim": "Planifica tu natación",
+        "Predicted Swim Conditions": "Condiciones de natación previstas",
+        "Predicted Swim Score": "Puntuación prevista",
+        "Strong wind may make conditions significantly rougher than normal.": "El viento fuerte puede hacer que las condiciones sean mucho más difíciles de lo normal.",
+        "Moderate wind — expect increased chop.": "Viento moderado — espera más oleaje.",
+        "CALM TO SLIGHT CHOP": "CALMA A OLEAJE LEVE",
+        "INCREASING CHOP": "OLEAJE CRECIENTE",
+        "CHOPPY": "CON OLEAJE",
+        "SLIGHTLY CHOPPY": "LIGERAMENTE OLEADO",
+        "CHOPPY / STRONG WIND": "OLEAJE / VIENTO FUERTE",
+        "Sheltered side": "Lado protegido",
+        "Small waves": "Olas pequeñas",
+        "Moderate waves": "Olas moderadas",
+        "Large waves": "Olas grandes",
+        "Comfortable water temperature": "Temperatura del agua agradable",
+        "Cold water": "Agua fría",
+        "Very cold water": "Agua muy fría",
+        "Light wind": "Viento ligero",
+        "Moderate wind": "Viento moderado",
+        "Strong wind": "Viento fuerte",
+        "Unable to calculate the journey.": "No se pudo calcular el viaje.",
+        "Journey time is an estimate and does not include traffic, stops or delays.": "El tiempo de viaje es estimado y no incluye tráfico, paradas ni retrasos.",
+        "Youghal Quay is the default location when the app opens. Select another sea or lake location from the location menu if required.": "Youghal Quay es el lugar predeterminado al abrir la app. Selecciona otro lugar de mar o lago si es necesario.",
+        "The forecast loads automatically when you choose a location. The 7-day forecast is the main view.": "El pronóstico se carga automáticamente al elegir un lugar. El pronóstico de 7 días es la vista principal.",
+        "Tap a forecast day to open the information for that day. If the selected day is today, it is shown as": "Toca un día del pronóstico para ver su información. Si el día seleccionado es hoy, se muestra como",
+        "Current conditions and the Swim Recommendation are kept out of the main phone view to reduce clutter. They remain available on the main desktop view.": "Las condiciones actuales y la recomendación de natación no aparecen en la vista principal del teléfono para reducir el desorden. Siguen disponibles en la vista principal de escritorio.",
+        "When viewing a sea forecast day, choose the tide option if you want tide information for that date.": "Al ver un día del pronóstico marino, selecciona la opción de mareas si quieres información de mareas para esa fecha.",
+        "Lake forecasts do not use sea tide information. Select a forecast day to see the lake information for that date.": "Los pronósticos de lago no utilizan información de mareas marinas. Selecciona un día para ver la información del lago de esa fecha.",
+        "Use the Units option in the header menu to switch between Metric (km, °C, metres) and Imperial (miles, °F, feet). Wind speed changes between m/s and mph.": "Usa la opción Unidades del menú superior para cambiar entre métrico (km, °C, metros) e imperial (millas, °F, pies). La velocidad del viento cambia entre m/s y mph.",
+        "Use the theme option in the header to switch themes. Dark theme is the default.": "Usa la opción de tema del encabezado para cambiar de tema. El tema oscuro es el predeterminado.",
+        "Open the menu to access this guide and see the current App Version.": "Abre el menú para acceder a esta guía y ver la versión actual de la app.",
+        "Forecast conditions can change, particularly several days in advance. Predictions are a guide only and should not be relied upon as an assessment of swimming safety. Always check the latest forecast and local conditions before swimming.": "Las condiciones previstas pueden cambiar, especialmente con varios días de antelación. Las predicciones son solo orientativas y no deben utilizarse para evaluar la seguridad de la natación. Comprueba siempre el pronóstico más reciente y las condiciones locales antes de nadar."
+    },
+    "fr": {
+        "Sea Swim Planner": "Planificateur de nage en mer",
+        "Open Water Swim Planner": "Planificateur de nage en eau libre",
+        "Sea & lake conditions, forecasts and swim planning": "Conditions de mer et de lac, prévisions et planification de nage",
+        "7-DAY OUTLOOK": "PRÉVISIONS À 7 JOURS",
+        "SWIM LOCATION": "LIEU DE BAIGNADE",
+        "Choose your swim location.": "Choisissez votre lieu de baignade.",
+        "View the forecast.": "Voir les prévisions.",
+        "Select a day.": "Sélectionnez un jour.",
+        "Current conditions.": "Conditions actuelles.",
+        "Close a pop-up.": "Fermer une fenêtre contextuelle.",
+        "Use the Close button or X when available.": "Utilisez le bouton Fermer ou X lorsqu’il est disponible.",
+        "Desktop PC": "Ordinateur",
+        "Air temperature": "Température de l’air",
+        "Water temperature": "Température de l’eau",
+        "Wind speed": "Vitesse du vent",
+        "Wind direction": "Direction du vent",
+        "Gusts": "Rafales",
+        "Rain probability": "Probabilité de pluie",
+        "Wave height": "Hauteur des vagues",
+        "Wave period": "Période des vagues",
+        "Wave direction": "Direction des vagues",
+        "Swell direction": "Direction de la houle",
+        "Wind": "Vent",
+        "Conditions": "Conditions météo",
+        "Clear sky ☀️": "Ciel dégagé ☀️",
+        "Cloudy ☁️": "Nuageux ☁️",
+        "Fog 🌫️": "Brouillard 🌫️",
+        "Rain 🌧️": "Pluie 🌧️",
+        "Snow ❄️": "Neige ❄️",
+        "Rain showers 🌦️": "Averses 🌦️",
+        "Thunderstorm ⛈️": "Orage ⛈️",
+        "Unknown": "Inconnu",
+        "Selected high tide": "Marée haute sélectionnée",
+        "High Tide": "Marée haute",
+        "Low Tide": "Marée basse",
+        "Full forecast": "Prévisions complètes",
+        "Plan your swim": "Planifiez votre baignade",
+        "Predicted Swim Conditions": "Conditions de baignade prévues",
+        "Predicted Swim Score": "Score de baignade prévu",
+        "Strong wind may make conditions significantly rougher than normal.": "Un vent fort peut rendre les conditions nettement plus difficiles que d’habitude.",
+        "Moderate wind — expect increased chop.": "Vent modéré — attendez-vous à davantage de clapot.",
+        "CALM TO SLIGHT CHOP": "CALME À FAIBLE CLAPOT",
+        "INCREASING CHOP": "CLAPOT EN AUGMENTATION",
+        "CHOPPY": "AGITÉ",
+        "SLIGHTLY CHOPPY": "LÉGÈREMENT AGITÉ",
+        "CHOPPY / STRONG WIND": "AGITÉ / VENT FORT",
+        "Sheltered side": "Côté abrité",
+        "Small waves": "Petites vagues",
+        "Moderate waves": "Vagues modérées",
+        "Large waves": "Grosses vagues",
+        "Comfortable water temperature": "Température de l’eau confortable",
+        "Cold water": "Eau froide",
+        "Very cold water": "Eau très froide",
+        "Light wind": "Vent léger",
+        "Moderate wind": "Vent modéré",
+        "Strong wind": "Vent fort",
+        "Unable to calculate the journey.": "Impossible de calculer le trajet.",
+        "Journey time is an estimate and does not include traffic, stops or delays.": "La durée du trajet est une estimation et ne comprend ni circulation, ni arrêts, ni retards.",
+        "Youghal Quay is the default location when the app opens. Select another sea or lake location from the location menu if required.": "Youghal Quay est le lieu par défaut à l’ouverture de l’application. Sélectionnez un autre lieu de mer ou de lac si nécessaire.",
+        "The forecast loads automatically when you choose a location. The 7-day forecast is the main view.": "Les prévisions se chargent automatiquement lorsque vous choisissez un lieu. Les prévisions à 7 jours sont la vue principale.",
+        "Tap a forecast day to open the information for that day. If the selected day is today, it is shown as": "Touchez un jour des prévisions pour voir ses informations. Si le jour sélectionné est aujourd’hui, il s’affiche comme",
+        "Current conditions and the Swim Recommendation are kept out of the main phone view to reduce clutter. They remain available on the main desktop view.": "Les conditions actuelles et la recommandation de baignade sont retirées de la vue principale sur téléphone pour alléger l’affichage. Elles restent disponibles sur ordinateur.",
+        "When viewing a sea forecast day, choose the tide option if you want tide information for that date.": "Lors de l’affichage d’un jour de prévisions marines, choisissez l’option de marée pour voir les informations de cette date.",
+        "Lake forecasts do not use sea tide information. Select a forecast day to see the lake information for that date.": "Les prévisions des lacs n’utilisent pas les informations de marée marine. Sélectionnez un jour pour voir les informations du lac à cette date.",
+        "Use the Units option in the header menu to switch between Metric (km, °C, metres) and Imperial (miles, °F, feet). Wind speed changes between m/s and mph.": "Utilisez l’option Unités du menu pour passer du système métrique (km, °C, mètres) à l’impérial (miles, °F, pieds). La vitesse du vent passe de m/s à mph.",
+        "Use the theme option in the header to switch themes. Dark theme is the default.": "Utilisez l’option de thème dans l’en-tête pour changer de thème. Le thème sombre est utilisé par défaut.",
+        "Open the menu to access this guide and see the current App Version.": "Ouvrez le menu pour accéder à ce guide et voir la version actuelle de l’application.",
+        "Forecast conditions can change, particularly several days in advance. Predictions are a guide only and should not be relied upon as an assessment of swimming safety. Always check the latest forecast and local conditions before swimming.": "Les conditions prévues peuvent changer, surtout plusieurs jours à l’avance. Les prévisions sont indicatives et ne doivent pas servir à évaluer la sécurité de la baignade. Vérifiez toujours les dernières prévisions et les conditions locales avant de nager."
+    },
+    "hi": {
+        "Sea Swim Planner": "समुद्री तैराकी प्लानर",
+        "Open Water Swim Planner": "ओपन वॉटर स्विम प्लानर",
+        "Sea & lake conditions, forecasts and swim planning": "समुद्र और झील की स्थितियाँ, पूर्वानुमान और तैराकी योजना",
+        "7-DAY OUTLOOK": "7-दिन का पूर्वानुमान",
+        "SWIM LOCATION": "तैराकी स्थान",
+        "Choose your swim location.": "अपना तैराकी स्थान चुनें।",
+        "View the forecast.": "पूर्वानुमान देखें।",
+        "Select a day.": "एक दिन चुनें।",
+        "Current conditions.": "वर्तमान स्थितियाँ।",
+        "Close a pop-up.": "पॉप-अप बंद करें।",
+        "Use the Close button or X when available.": "उपलब्ध होने पर Close बटन या X का उपयोग करें।",
+        "Desktop PC": "डेस्कटॉप कंप्यूटर",
+        "Air temperature": "हवा का तापमान",
+        "Water temperature": "पानी का तापमान",
+        "Wind speed": "हवा की गति",
+        "Wind direction": "हवा की दिशा",
+        "Gusts": "हवा के झोंके",
+        "Rain probability": "बारिश की संभावना",
+        "Wave height": "लहरों की ऊँचाई",
+        "Wave period": "लहरों की अवधि",
+        "Wave direction": "लहरों की दिशा",
+        "Swell direction": "स्वेल की दिशा",
+        "Wind": "हवा",
+        "Conditions": "मौसम की स्थिति",
+        "Clear sky ☀️": "साफ आसमान ☀️",
+        "Cloudy ☁️": "बादल छाए हुए ☁️",
+        "Fog 🌫️": "कोहरा 🌫️",
+        "Rain 🌧️": "बारिश 🌧️",
+        "Snow ❄️": "बर्फबारी ❄️",
+        "Rain showers 🌦️": "बारिश की बौछारें 🌦️",
+        "Thunderstorm ⛈️": "आंधी-तूफान ⛈️",
+        "Unknown": "अज्ञात",
+        "Selected high tide": "चयनित उच्च ज्वार",
+        "High Tide": "उच्च ज्वार",
+        "Low Tide": "निम्न ज्वार",
+        "Full forecast": "पूरा पूर्वानुमान",
+        "Plan your swim": "अपनी तैराकी की योजना बनाएँ",
+        "Predicted Swim Conditions": "अनुमानित तैराकी स्थितियाँ",
+        "Predicted Swim Score": "अनुमानित तैराकी स्कोर",
+        "Strong wind may make conditions significantly rougher than normal.": "तेज़ हवा सामान्य से काफी कठिन परिस्थितियाँ बना सकती है।",
+        "Moderate wind — expect increased chop.": "मध्यम हवा — लहरें बढ़ने की उम्मीद है।",
+        "CALM TO SLIGHT CHOP": "शांत से हल्की लहरें",
+        "INCREASING CHOP": "बढ़ती लहरें",
+        "CHOPPY": "लहरदार",
+        "SLIGHTLY CHOPPY": "थोड़ी लहरदार",
+        "CHOPPY / STRONG WIND": "लहरदार / तेज़ हवा",
+        "Sheltered side": "आश्रय वाला किनारा",
+        "Small waves": "छोटी लहरें",
+        "Moderate waves": "मध्यम लहरें",
+        "Large waves": "बड़ी लहरें",
+        "Comfortable water temperature": "आरामदायक पानी का तापमान",
+        "Cold water": "ठंडा पानी",
+        "Very cold water": "बहुत ठंडा पानी",
+        "Light wind": "हल्की हवा",
+        "Moderate wind": "मध्यम हवा",
+        "Strong wind": "तेज़ हवा",
+        "Unable to calculate the journey.": "यात्रा की गणना नहीं हो सकी।",
+        "Journey time is an estimate and does not include traffic, stops or delays.": "यात्रा का समय अनुमानित है और इसमें ट्रैफिक, रुकना या देरी शामिल नहीं है।",
+        "Youghal Quay is the default location when the app opens. Select another sea or lake location from the location menu if required.": "ऐप खुलने पर Youghal Quay डिफ़ॉल्ट स्थान होता है। आवश्यकता होने पर मेनू से कोई अन्य समुद्री या झील का स्थान चुनें।",
+        "The forecast loads automatically when you choose a location. The 7-day forecast is the main view.": "स्थान चुनने पर पूर्वानुमान अपने आप लोड होता है। 7-दिन का पूर्वानुमान मुख्य दृश्य है।",
+        "Tap a forecast day to open the information for that day. If the selected day is today, it is shown as": "उस दिन की जानकारी खोलने के लिए पूर्वानुमान के दिन पर टैप करें। यदि चुना गया दिन आज है, तो इसे इस रूप में दिखाया जाता है",
+        "Current conditions and the Swim Recommendation are kept out of the main phone view to reduce clutter. They remain available on the main desktop view.": "अव्यवस्था कम करने के लिए वर्तमान स्थितियाँ और तैराकी सुझाव फोन की मुख्य स्क्रीन पर नहीं दिखते। वे डेस्कटॉप मुख्य स्क्रीन पर उपलब्ध रहते हैं।",
+        "When viewing a sea forecast day, choose the tide option if you want tide information for that date.": "समुद्री पूर्वानुमान का दिन देखते समय उस तारीख की ज्वार जानकारी के लिए ज्वार विकल्प चुनें।",
+        "Lake forecasts do not use sea tide information. Select a forecast day to see the lake information for that date.": "झील के पूर्वानुमान में समुद्री ज्वार की जानकारी का उपयोग नहीं होता। उस तारीख की झील की जानकारी देखने के लिए एक दिन चुनें।",
+        "Use the Units option in the header menu to switch between Metric (km, °C, metres) and Imperial (miles, °F, feet). Wind speed changes between m/s and mph.": "ऊपरी मेनू में इकाइयाँ विकल्प से मीट्रिक (km, °C, मीटर) और इम्पीरियल (मील, °F, फीट) के बीच बदलें। हवा की गति m/s और mph में बदलती है।",
+        "Use the theme option in the header to switch themes. Dark theme is the default.": "हेडर में थीम विकल्प से थीम बदलें। डार्क थीम डिफ़ॉल्ट है।",
+        "Open the menu to access this guide and see the current App Version.": "इस गाइड और वर्तमान ऐप संस्करण को देखने के लिए मेनू खोलें।",
+        "Forecast conditions can change, particularly several days in advance. Predictions are a guide only and should not be relied upon as an assessment of swimming safety. Always check the latest forecast and local conditions before swimming.": "पूर्वानुमान की स्थितियाँ बदल सकती हैं, खासकर कई दिन पहले के पूर्वानुमान। अनुमान केवल मार्गदर्शन हैं और इन्हें तैराकी की सुरक्षा के आकलन के रूप में नहीं लेना चाहिए। तैरने से पहले हमेशा नवीनतम पूर्वानुमान और स्थानीय स्थितियाँ जाँचें।"
+    }
+};
+Object.keys(extraLanguageText).forEach(lang => {
+    if (languageText[lang]) Object.assign(languageText[lang], extraLanguageText[lang]);
+});
+
 function translateString(value) {
     const lang = getLanguage();
     const dict = languageText[lang] || languageText.en;
@@ -5447,20 +5783,17 @@ function startLanguageObserver() {
     if (languageObserverStarted || !document.body) return;
     languageObserverStarted = true;
 
+    let languageTranslationQueued = false;
     languageObserver = new MutationObserver(() => {
-        // Disconnect while translating. Otherwise changing text/HTML inside
-        // the observed body can trigger the observer repeatedly and freeze
-        // the page.
-        languageObserver.disconnect();
-        try {
-            translatePage();
-        } finally {
-            languageObserver.observe(document.body, {
-                childList: true,
-                subtree: true,
-                characterData: true
-            });
-        }
+        if (languageTranslationQueued) return;
+        languageTranslationQueued = true;
+        requestAnimationFrame(() => {
+            languageTranslationQueued = false;
+            languageObserver.disconnect();
+            try { translatePage(); } finally {
+                languageObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+            }
+        });
     });
 
     languageObserver.observe(document.body, {
