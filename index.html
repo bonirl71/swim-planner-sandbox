@@ -5412,32 +5412,14 @@ function translatePage() {
     while (walker.nextNode()) nodes.push(walker.currentNode);
 
     nodes.forEach(node => {
-        // Always translate from the original English source text. This makes
-        // switching between languages work in both directions.
-        if (typeof node.__swimOriginalText !== "string") {
-            node.__swimOriginalText = node.nodeValue;
-        }
-
-        const source = node.__swimOriginalText;
-        const translated = translateString(source);
-
-        if (node.nodeValue !== translated) {
-            node.nodeValue = translated;
-        }
+        const translated = translateString(node.nodeValue);
+        if (translated !== node.nodeValue) node.nodeValue = translated;
     });
 
-    // Translate select options separately, while retaining their original text.
+    // Translate select options separately.
     document.querySelectorAll("option").forEach(option => {
-        if (typeof option.__swimOriginalText !== "string") {
-            option.__swimOriginalText = option.textContent;
-        }
-
-        const source = option.__swimOriginalText;
-        const translated = translateString(source);
-
-        if (option.textContent !== translated) {
-            option.textContent = translated;
-        }
+        const translated = translateString(option.textContent);
+        if (translated !== option.textContent) option.textContent = translated;
     });
 
     updateLanguageMenu();
