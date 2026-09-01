@@ -2127,7 +2127,7 @@ body.dark-theme .sea-forecast-summary {
                 📖 <span>How to Use</span>
             </button>
             <div class="menu-item menu-version">
-                ℹ️ <span>App Version <strong>2.5.2</strong></span>
+                ℹ️ <span>App Version <strong>2.5.3</strong></span>
             </div>
             <button type="button" class="menu-item" id="themeMenuButton" onclick="toggleTheme()">
                 🌙 <span>Dark Theme</span>
@@ -2292,7 +2292,107 @@ body.dark-theme .sea-forecast-summary {
 </div>
 
 </div>
-<script src="locations.js?v=4">
+<script>
+const swimLocations = [
+
+    // =========================
+    // LAKE LOCATIONS
+    // =========================
+
+    {
+        id: 6,
+        name: "Youghal Quay",
+        county: "Tipperary",
+        latitude: 52.898509,
+        longitude: -8.310286,
+        distance: "TBC",
+        type: "lake"
+    },
+    {
+        id: 8,
+        name: "Portumna Harbour",
+        county: "Galway",
+        latitude: 53.083405,
+        longitude: -8.220102,
+        distance: "TBC",
+        type: "lake"
+    },
+    {
+        id: 9,
+        name: "Twomilegate",
+        county: "Clare",
+        latitude: 52.83623,
+        longitude: -8.46424,
+        distance: "TBC",
+        type: "lake"
+    },
+
+    // =========================
+    // SEA LOCATIONS
+    // =========================
+
+    {
+        id: 1,
+        name: "Blackhead Lighthouse and Gleninagh Pier",
+        county: "Clare",
+        latitude: 53.148,
+        longitude: -9.265,
+        distance: "2.5 km",
+        type: "sea",
+        tideStation: "IESHBWC070_0000_0100_MODELLED"
+    },
+    {
+        id: 2,
+        name: "Fanore Beach",
+        county: "Clare",
+        latitude: 53.125,
+        longitude: -9.290,
+        distance: "TBC",
+        type: "sea",
+        tideStation: "IESHBWC070_0000_0100_MODELLED"
+    },
+    {
+        id: 3,
+        name: "Lahinch Beach",
+        county: "Clare",
+        latitude: 53.053,
+        longitude: -9.344,
+        distance: "TBC",
+        type: "sea",
+        tideStation: "IESHBWC100_0000_0100_MODELLED"
+    },
+    {
+        id: 4,
+        name: "Kilkee Bay",
+        county: "Clare",
+        latitude: 52.679141,
+        longitude: -9.652973,
+        distance: "TBC",
+        type: "sea",
+        tideStation: "IESHBWC070_0000_0400_MODELLED"
+    },
+    {
+        id: 5,
+        name: "Whitestrand",
+        county: "Clare",
+        latitude: 52.747723,
+        longitude: -9.549059,
+        distance: "TBC",
+        type: "sea",
+        tideStation: "IESHBWC080_0000_0100_MODELLED"
+    },
+    {
+        id: 7,
+        name: "Lambay Island",
+        county: "Dublin",
+        latitude: 53.49222995430973,
+        longitude: -6.015908380729172,
+        distance: "TBC",
+        type: "sea",
+        tideStation: "IEEABWC020_0000_0200_MODELLED"
+    }
+];
+
 document.addEventListener("click", function(event) {
     if (!document.body.classList.contains("desktop-sea-travel-open")) return;
 
@@ -4989,123 +5089,57 @@ async function calculateJourney() {
    LANGUAGE SELECTION
    ========================= */
 
-const translations = {
-    en: {
-        howToUse:"How to Use", appVersion:"App Version", darkTheme:"Dark Theme",
-        lightTheme:"Light Theme", units:"Units", language:"Language",
-        location:"Swim Location", currentConditions:"Current Conditions",
-        recommendation:"Swim Recommendation", forecast:"7-Day Forecast",
-        seaTideInfo:"Tide Info", journeyPlanner:"Journey Planner", close:"Close",
-        loading:"Loading...", unavailable:"Unavailable",
-        airTemperature:"Air temperature", waterTemperature:"Water temperature",
-        wind:"Wind", gusts:"Gusts", rainProbability:"Rain probability",
-        waves:"Wave height", wavePeriod:"Wave period",
-        waveDirection:"Wave direction", lakeWater:"Lake water"
-    },
-    es: {
-        howToUse:"Cómo usar", appVersion:"Versión de la app", darkTheme:"Tema oscuro",
-        lightTheme:"Tema claro", units:"Unidades", language:"Idioma",
-        location:"Lugar de natación", currentConditions:"Condiciones actuales",
-        recommendation:"Recomendación de natación", forecast:"Pronóstico de 7 días",
-        seaTideInfo:"Información de mareas", journeyPlanner:"Planificador de viaje",
-        close:"Cerrar", loading:"Cargando...", unavailable:"No disponible",
-        airTemperature:"Temperatura del aire", waterTemperature:"Temperatura del agua",
-        wind:"Viento", gusts:"Ráfagas", rainProbability:"Probabilidad de lluvia",
-        waves:"Altura de las olas", wavePeriod:"Período de las olas",
-        waveDirection:"Dirección de las olas", lakeWater:"Agua del lago"
-    },
-    zh: {
-        howToUse:"使用指南", appVersion:"应用版本", darkTheme:"深色主题",
-        lightTheme:"浅色主题", units:"单位", language:"语言",
-        location:"游泳地点", currentConditions:"当前条件", recommendation:"游泳建议",
-        forecast:"7天预报", seaTideInfo:"潮汐信息", journeyPlanner:"行程规划",
-        close:"关闭", loading:"加载中...", unavailable:"暂无数据",
-        airTemperature:"气温", waterTemperature:"水温", wind:"风速", gusts:"阵风",
-        rainProbability:"降雨概率", waves:"浪高", wavePeriod:"浪周期",
-        waveDirection:"浪向", lakeWater:"湖水"
-    },
-    hi: {
-        howToUse:"कैसे उपयोग करें", appVersion:"ऐप संस्करण", darkTheme:"डार्क थीम",
-        lightTheme:"लाइट थीम", units:"इकाइयाँ", language:"भाषा",
-        location:"तैराकी स्थान", currentConditions:"वर्तमान स्थितियाँ",
-        recommendation:"तैराकी सुझाव", forecast:"7-दिन का पूर्वानुमान",
-        seaTideInfo:"ज्वार की जानकारी", journeyPlanner:"यात्रा योजनाकार",
-        close:"बंद करें", loading:"लोड हो रहा है...", unavailable:"उपलब्ध नहीं",
-        airTemperature:"हवा का तापमान", waterTemperature:"पानी का तापमान",
-        wind:"हवा", gusts:"झोंके", rainProbability:"बारिश की संभावना",
-        waves:"लहरों की ऊँचाई", wavePeriod:"लहरों की अवधि",
-        waveDirection:"लहरों की दिशा", lakeWater:"झील का पानी"
-    },
-    ar: {
-        howToUse:"طريقة الاستخدام", appVersion:"إصدار التطبيق", darkTheme:"الوضع الداكن",
-        lightTheme:"الوضع الفاتح", units:"الوحدات", language:"اللغة",
-        location:"موقع السباحة", currentConditions:"الظروف الحالية",
-        recommendation:"توصية السباحة", forecast:"توقعات 7 أيام",
-        seaTideInfo:"معلومات المد والجزر", journeyPlanner:"مخطط الرحلة",
-        close:"إغلاق", loading:"جارٍ التحميل...", unavailable:"غير متاح",
-        airTemperature:"درجة حرارة الهواء", waterTemperature:"درجة حرارة الماء",
-        wind:"الرياح", gusts:"هبات الرياح", rainProbability:"احتمال هطول المطر",
-        waves:"ارتفاع الموج", wavePeriod:"فترة الموج",
-        waveDirection:"اتجاه الموج", lakeWater:"مياه البحيرة"
-    }
+const SWIM_LANGUAGE_KEY = "swimLanguage";
+
+const languageLabels = {
+    en: { menu: "Language", guide: "How to Use", dark: "Dark Theme", light: "Light Theme", units: "Units" },
+    es: { menu: "Idioma", guide: "Cómo usar", dark: "Tema oscuro", light: "Tema claro", units: "Unidades" },
+    zh: { menu: "语言", guide: "使用指南", dark: "深色主题", light: "浅色主题", units: "单位" },
+    hi: { menu: "भाषा", guide: "कैसे उपयोग करें", dark: "डार्क थीम", light: "लाइट थीम", units: "इकाइयाँ" },
+    ar: { menu: "اللغة", guide: "طريقة الاستخدام", dark: "الوضع الداكن", light: "الوضع الفاتح", units: "الوحدات" }
 };
 
 function getLanguage() {
-    return localStorage.getItem("swimLanguage") || "en";
-}
-
-function t(key) {
-    const lang = getLanguage();
-    return (translations[lang] && translations[lang][key]) ||
-           translations.en[key] || key;
+    return localStorage.getItem(SWIM_LANGUAGE_KEY) || "en";
 }
 
 function changeLanguage(language) {
-    if (!translations[language]) language = "en";
-    localStorage.setItem("swimLanguage", language);
-    applyLanguage();
+    if (!languageLabels[language]) language = "en";
+    localStorage.setItem(SWIM_LANGUAGE_KEY, language);
+    updateLanguageMenu();
+    updateLanguageLabels();
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
     closeMenu();
 }
 
-function applyLanguage() {
-    const lang = getLanguage();
-    document.documentElement.lang = lang;
-    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+function updateLanguageMenu() {
+    const select = document.getElementById("languageSelect");
+    if (select) select.value = getLanguage();
+}
 
-    const guide = document.querySelector('.app-menu-content button[onclick="openGuide()"]');
-    if (guide) guide.innerHTML = "📖 <span>" + t("howToUse") + "</span>";
-
-    const theme = document.getElementById("themeMenuButton");
-    if (theme) {
-        const dark = document.body.classList.contains("dark-theme");
-        theme.innerHTML = dark
-            ? "☀️ <span>" + t("lightTheme") + "</span>"
-            : "🌙 <span>" + t("darkTheme") + "</span>";
-    }
-
-    const unitsLabel = document.querySelector(".units-menu-item > span");
-    if (unitsLabel) unitsLabel.textContent = t("units");
+function updateLanguageLabels() {
+    const labels = languageLabels[getLanguage()] || languageLabels.en;
 
     const languageLabel = document.querySelector(".language-menu-item > span");
-    if (languageLabel) languageLabel.textContent = t("language");
+    if (languageLabel) languageLabel.textContent = labels.menu;
 
-    const locationHeading = document.querySelector("#locationCard .section-heading h2");
-    if (locationHeading) locationHeading.textContent = t("location");
+    const unitsLabel = document.querySelector(".units-menu-item > span");
+    if (unitsLabel) unitsLabel.textContent = labels.units;
 
-    const conditionsHeading = document.querySelector("#conditionsCard .section-heading h2");
-    if (conditionsHeading) conditionsHeading.textContent = t("currentConditions");
+    const guide = document.querySelector('.app-menu-content button[onclick="openGuide()"]');
+    if (guide) guide.innerHTML = "📖 <span>" + labels.guide + "</span>";
 
-    const recommendationHeading = document.querySelector("#recommendationCard .section-heading h2");
-    if (recommendationHeading) recommendationHeading.textContent = t("recommendation");
+    updateThemeMenu();
+}
 
-    const seaHeading = document.querySelector("#seaForecastCard .section-heading h2");
-    if (seaHeading) seaHeading.textContent = t("forecast");
-
-    const lakeHeading = document.querySelector("#lakeForecastCard .section-heading h2");
-    if (lakeHeading) lakeHeading.textContent = t("forecast");
-
-    const select = document.getElementById("languageSelect");
-    if (select) select.value = lang;
+function initialiseLanguage() {
+    const language = getLanguage();
+    if (!languageLabels[language]) localStorage.setItem(SWIM_LANGUAGE_KEY, "en");
+    updateLanguageMenu();
+    updateLanguageLabels();
+    document.documentElement.lang = getLanguage();
+    document.documentElement.dir = getLanguage() === "ar" ? "rtl" : "ltr";
 }
 
 /* =========================
