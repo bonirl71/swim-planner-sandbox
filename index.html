@@ -3853,8 +3853,8 @@ async function loadSeaForecast(selectedLocation) {
 
         daysContainer.innerHTML = forecast.map((day, index) => `
             <button type="button" class="forecast-day${index === 0 ? " active" : ""}" onclick="showSeaForecastDay(${index})">
-                <div class="forecast-day-name">${isForecastToday(day.date) ? "Today" : new Date(day.date + "T12:00:00").toLocaleDateString("en-IE", {weekday:"short"})}</div>
-                <div class="forecast-day-date">${isForecastToday(day.date) ? "" : new Date(day.date + "T12:00:00").toLocaleDateString("en-IE", {day:"numeric",month:"short"})}</div>
+                <div class="forecast-day-name">${isForecastToday(day.date) ? "Today" : new Date(day.date + "T12:00:00").toLocaleDateString(getLanguageLocale(), {weekday:"short"})}</div>
+                <div class="forecast-day-date">${isForecastToday(day.date) ? "" : new Date(day.date + "T12:00:00").toLocaleDateString(getLanguageLocale(), {day:"numeric",month:"short"})}</div>
                 <div class="forecast-icon">${getWeatherIcon(day.weatherCode)}</div>
                 <div class="forecast-temp">${formatTemperature(day.maxTemp, 0)}</div>
                 <div class="forecast-wind">${formatWind(day.wind, 0)} ${getCompassDirection(day.direction)}</div>
@@ -3893,7 +3893,7 @@ function showSeaForecastDay(index) {
 
     const dateText = isForecastToday(day.date)
         ? "Today"
-        : new Date(day.date + "T12:00:00").toLocaleDateString("en-IE", {
+        : new Date(day.date + "T12:00:00").toLocaleDateString(getLanguageLocale(), {
             weekday:"long", day:"numeric", month:"long"
         });
 
@@ -4260,8 +4260,8 @@ async function loadLakeForecast(selectedLocation, currentConditions = null) {
 
         daysContainer.innerHTML = forecast.map((day, index) => `
             <button type="button" class="forecast-day${index === 0 ? " active" : ""}" onclick="showLakeForecastDay(${index})">
-                <div class="forecast-day-name">${isForecastToday(day.date) ? "Today" : new Date(day.date + "T12:00:00").toLocaleDateString("en-IE", {weekday:"short"})}</div>
-                <div class="forecast-day-date">${isForecastToday(day.date) ? "" : new Date(day.date + "T12:00:00").toLocaleDateString("en-IE", {day:"numeric",month:"short"})}</div>
+                <div class="forecast-day-name">${isForecastToday(day.date) ? "Today" : new Date(day.date + "T12:00:00").toLocaleDateString(getLanguageLocale(), {weekday:"short"})}</div>
+                <div class="forecast-day-date">${isForecastToday(day.date) ? "" : new Date(day.date + "T12:00:00").toLocaleDateString(getLanguageLocale(), {day:"numeric",month:"short"})}</div>
                 <div class="forecast-icon">${getWeatherIcon(day.weatherCode)}</div>
                 <div class="forecast-temp">${formatTemperature(day.maxTemp, 0)}</div>
                 <div class="forecast-wind">${formatWind(day.wind, 0)} ${getCompassDirection(day.direction)}</div>
@@ -4299,7 +4299,7 @@ function showLakeForecastDay(index) {
 
     const dateText = isForecastToday(day.date)
         ? "Today"
-        : new Date(day.date + "T12:00:00").toLocaleDateString("en-IE", {
+        : new Date(day.date + "T12:00:00").toLocaleDateString(getLanguageLocale(), {
             weekday:"long", day:"numeric", month:"long"
         });
 
@@ -5362,6 +5362,14 @@ function changeLanguage(language) {
     document.documentElement.dir = "ltr";
     updateLanguageMenu();
     translatePage();
+
+    // Re-render the currently selected location so dynamic forecast/condition
+    // content is regenerated from English and then translated consistently.
+    const locationSelect = document.getElementById("locationSelect");
+    if (locationSelect && locationSelect.value && typeof checkConditions === "function") {
+        checkConditions().finally(() => queueLanguageTranslation());
+    }
+
     closeMenu();
 }
 
@@ -5711,22 +5719,46 @@ function translateString(value) {
     const dict = languageText[lang] || languageText.en;
     if (dict[value]) return dict[value];
 
-    // Translate phrases embedded in dynamic HTML while preserving numbers,
-    // location names, icons and other generated values.
-    let result = value;
-    const english = languageText.en;
-    Object.keys(english)
-        .filter(key => key !== english[key] && dict[key])
+    // Translate phrases embedded in dynamic HTML. Use ALL keys in the
+    // selected dictionary, including the extended dynamic-content phrases.
+    // This is important for strings such as "Air temperature: 23.4°C"
+    // where the whole text node is not an exact dictionary match.
+    let result = String(value);
+    Object.keys(dict)
+        .filter(key => key && dict[key] && key !== dict[key])
         .sort((a, b) => b.length - a.length)
         .forEach(key => {
             result = result.split(key).join(dict[key]);
         });
+
+    // Ratings are generated in uppercase by the scoring code.
+    const ratingMap = {
+        "EXCELLENT CONDITIONS": dict["Excellent conditions"],
+        "GOOD CONDITIONS": dict["Good conditions"],
+        "CHALLENGING CONDITIONS": dict["Challenging conditions"],
+        "POOR CONDITIONS": dict["Poor conditions"]
+    };
+    Object.keys(ratingMap).forEach(key => {
+        if (ratingMap[key]) result = result.split(key).join(ratingMap[key].toUpperCase());
+    });
+
     return result;
+}
+
+function getLanguageLocale() {
+    return {
+        en: "en-IE",
+        zh: "zh-CN",
+        hi: "hi-IN",
+        es: "es-ES",
+        fr: "fr-FR"
+    }[getLanguage()] || "en-IE";
 }
 
 function translatePage() {
     const root = document.body;
     if (!root) return;
+    window.__swimTranslating = true;
 
     const walker = document.createTreeWalker(
         root,
@@ -5774,26 +5806,31 @@ function translatePage() {
 
     updateLanguageMenu();
     updateThemeMenu();
+    window.__swimTranslating = false;
 }
 
 let languageObserverStarted = false;
 let languageObserver = null;
+let languageTranslationQueued = false;
+
+function queueLanguageTranslation() {
+    if (languageTranslationQueued || !document.body) return;
+    languageTranslationQueued = true;
+    requestAnimationFrame(() => {
+        languageTranslationQueued = false;
+        translatePage();
+    });
+}
 
 function startLanguageObserver() {
     if (languageObserverStarted || !document.body) return;
     languageObserverStarted = true;
 
-    let languageTranslationQueued = false;
     languageObserver = new MutationObserver(() => {
-        if (languageTranslationQueued) return;
-        languageTranslationQueued = true;
-        requestAnimationFrame(() => {
-            languageTranslationQueued = false;
-            languageObserver.disconnect();
-            try { translatePage(); } finally {
-                languageObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
-            }
-        });
+        // Ignore our own text replacements. Original English is stored on
+        // each text node, so the next real render can always be translated.
+        if (window.__swimTranslating) return;
+        queueLanguageTranslation();
     });
 
     languageObserver.observe(document.body, {
