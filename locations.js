@@ -31,6 +31,24 @@ const swimLocations = [
         distance: "TBC",
         type: "lake"
     },
+    {
+        id: 13,
+        name: "Blue Lake",
+        county: "Kyiv Oblast Ukraine ",
+        latitude: 50.2486488821285,
+        longitude: 30.56133373633814,
+        distance: "TBC",
+        type: "lake"
+    },
+    {
+        id: 14,
+        name: "Gloria Lake",
+        county: "Kyiv Oblast Ukraine",
+        latitude: 50.56906891068027,
+        longitude: 29.922190199229075,
+        distance: "TBC",
+        type: "lake"
+    },
 
 
     // =========================
