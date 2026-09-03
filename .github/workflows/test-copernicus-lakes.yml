@@ -8,98 +8,139 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Search Copernicus LSWT catalogue
+      - name: Search LSWT coverage at lake coordinates
         run: |
           set -e
 
           echo "======================================"
-          echo "Copernicus LSWT Catalogue Test"
+          echo "Copernicus LSWT Coverage Test"
           echo "======================================"
           echo ""
 
           python3 - <<'PY'
           import requests
-          import json
+          from urllib.parse import quote
 
           BASE = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
 
-          dataset = "lswt-nrt_global_1km_10daily_v1"
+          DATASET = "lswt-nrt_global_1km_10daily_v1"
 
-          params = {
-              "$filter": (
+          lakes = [
+              (
+                  "Blue Lake",
+                  50.2486488821285,
+                  30.56133373633814
+              ),
+              (
+                  "Gloria Lake",
+                  50.56906891068027,
+                  29.922190199229075
+              )
+          ]
+
+          for name, lat, lon in lakes:
+
+              print("")
+              print("######################################")
+              print(name)
+              print("######################################")
+              print("")
+              print("Latitude:", lat)
+              print("Longitude:", lon)
+              print("")
+
+              point = f"POINT({lon} {lat})"
+
+              filter_text = (
+                  "Collection/Name eq 'CLMS' and "
                   "Attributes/OData.CSC.StringAttribute/any("
                   "att:att/Name eq 'datasetIdentifier' and "
-                  "att/OData.CSC.StringAttribute/Value eq "
-                  f"'{dataset}')"
-              ),
-              "$select": "Id,Name,S3Path,GeoFootprint,ContentDate,OriginDate",
-              "$top": "20"
-          }
+                  f"att/OData.CSC.StringAttribute/Value eq '{DATASET}') and "
+                  f"OData.CSC.Intersects(area=geography'SRID=4326;{point}') and "
+                  "ContentDate/Start gt 2026-05-01T00:00:00.000Z and "
+                  "ContentDate/Start lt 2026-09-04T00:00:00.000Z"
+              )
 
-          print("Searching dataset:")
-          print(dataset)
-          print("")
+              params = {
+                  "$filter": filter_text,
+                  "$select": (
+                      "Id,Name,S3Path,"
+                      "GeoFootprint,ContentDate,OriginDate"
+                  ),
+                  "$orderby": "ContentDate/Start desc",
+                  "$top": "20"
+              }
 
-          response = requests.get(
-              BASE,
-              params=params,
-              timeout=60
-          )
-
-          print("HTTP status:", response.status_code)
-          print("")
-
-          if response.status_code != 200:
-              print(response.text)
-              raise SystemExit(1)
-
-          data = response.json()
-
-          products = data.get("value", [])
-
-          print("Products returned:", len(products))
-          print("")
-
-          for i, product in enumerate(products, 1):
-
-              print("======================================")
-              print(f"PRODUCT {i}")
-              print("======================================")
-
-              print("Name:")
-              print(product.get("Name"))
-
+              print("Searching catalogue...")
               print("")
-              print("ID:")
-              print(product.get("Id"))
 
+              response = requests.get(
+                  BASE,
+                  params=params,
+                  timeout=60
+              )
+
+              print("HTTP status:", response.status_code)
               print("")
-              print("Origin date:")
-              print(product.get("OriginDate"))
 
+              if response.status_code != 200:
+                  print("ERROR:")
+                  print(response.text)
+                  continue
+
+              products = response.json().get("value", [])
+
+              print("Products intersecting this coordinate:")
+              print(len(products))
               print("")
-              print("Content date:")
-              print(product.get("ContentDate"))
 
-              print("")
-              print("S3 path:")
-              print(product.get("S3Path"))
-
-              footprint = product.get("GeoFootprint")
-
-              print("")
-              print("GeoFootprint present:",
-                    footprint is not None)
-
-              if footprint:
+              if not products:
+                  print("NO LSWT PRODUCTS FOUND")
+                  print("")
                   print(
-                      "Geometry type:",
-                      footprint.get("type")
+                      "The Copernicus catalogue contains no "
+                      "LSWT product whose footprint intersects "
+                      "this coordinate during the requested period."
+                  )
+                  continue
+
+              print("LSWT PRODUCTS FOUND")
+              print("======================================")
+
+              for i, product in enumerate(products, 1):
+
+                  print("")
+                  print(f"PRODUCT {i}")
+                  print("--------------------------------------")
+
+                  print("Name:")
+                  print(product.get("Name"))
+
+                  print("")
+                  print("Content date:")
+                  print(product.get("ContentDate"))
+
+                  print("")
+                  print("Origin date:")
+                  print(product.get("OriginDate"))
+
+                  print("")
+                  print("S3 path:")
+                  print(product.get("S3Path"))
+
+                  footprint = product.get("GeoFootprint")
+
+                  print("")
+                  print(
+                      "GeoFootprint:",
+                      "YES" if footprint else "NO"
                   )
 
               print("")
+              print("======================================")
 
-          print("======================================")
-          print("CATALOGUE SEARCH COMPLETE")
-          print("======================================")
+          print("")
+          print("######################################")
+          print("CATALOGUE TEST COMPLETE")
+          print("######################################")
           PY
