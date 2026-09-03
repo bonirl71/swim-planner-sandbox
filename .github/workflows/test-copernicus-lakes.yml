@@ -21,6 +21,10 @@ jobs:
           echo "======================================"
           echo ""
 
+          echo "Installing TIFF reader..."
+          python3 -m pip install --quiet tifffile numpy
+
+          echo ""
           echo "Getting Copernicus access token..."
 
           TOKEN_RESPONSE=$(curl -sS -X POST \
@@ -45,6 +49,8 @@ jobs:
             NAME="$1"
             LAT="$2"
             LON="$3"
+
+            SAFE_NAME="${NAME// /_}"
 
             echo "======================================"
             echo "$NAME"
@@ -116,7 +122,7 @@ jobs:
 
           function evaluatePixel(sample) {
             return [
-              sample.LSWT,
+              sample.LSWT * 0.01 - 273.15,
               sample.NOBS,
               sample.QLEVEL
             ];
@@ -127,7 +133,7 @@ jobs:
             echo "Requesting LSWT data..."
 
             HTTP_CODE=$(curl -sS \
-              -o "${NAME// /_}.tif" \
+              -o "${SAFE_NAME}.tif" \
               -w "%{http_code}" \
               -X POST \
               "https://sh.dataspace.copernicus.eu/process/v1" \
@@ -142,20 +148,78 @@ jobs:
               echo "ERROR: Copernicus returned HTTP $HTTP_CODE"
               echo ""
               echo "Response from Copernicus:"
-              cat "${NAME// /_}.tif"
+              cat "${SAFE_NAME}.tif"
               echo ""
               return 1
             fi
 
             echo "Response received."
-
             echo ""
-            echo "File information:"
-            file "${NAME// /_}.tif"
 
-            echo ""
-            echo "First bytes of response:"
-            xxd -l 32 "${NAME// /_}.tif"
+            echo "Reading temperature values..."
+
+            python3 - "${SAFE_NAME}.tif" "${NAME}" <<'PY'
+          import sys
+          import math
+          import numpy as np
+          import tifffile
+
+          filename = sys.argv[1]
+          lake_name = sys.argv[2]
+
+          data = tifffile.imread(filename)
+
+          print("Raw TIFF shape:", data.shape)
+          print("Raw values:", data)
+
+          values = np.asarray(data).reshape(-1)
+
+          if len(values) < 3:
+              print("ERROR: Expected 3 values but received fewer.")
+              sys.exit(1)
+
+          temperature = float(values[0])
+          observations = float(values[1])
+          quality = float(values[2])
+
+          print("")
+          print("RESULT FOR:", lake_name)
+          print("--------------------------------------")
+
+          if not math.isfinite(temperature):
+              print("Temperature: NO DATA")
+          else:
+              print(f"Temperature: {temperature:.2f} °C")
+
+          print(f"Observations: {observations:.0f}")
+          print(f"Quality level: {quality:.0f}")
+
+          print("")
+
+          quality_names = {
+              0: "NO DATA",
+              1: "BAD DATA",
+              2: "WORST QUALITY",
+              3: "LOW QUALITY",
+              4: "ACCEPTABLE QUALITY",
+              5: "BEST QUALITY"
+          }
+
+          q = int(round(quality))
+
+          print("Quality assessment:", quality_names.get(q, "UNKNOWN"))
+
+          if not math.isfinite(temperature) or q == 0:
+              print("STATUS: No usable temperature reading")
+          elif q <= 2:
+              print("STATUS: Reading exists but quality is poor")
+          elif q == 3:
+              print("STATUS: Reading available - low quality")
+          elif q == 4:
+              print("STATUS: Reading available - acceptable quality")
+          elif q == 5:
+              print("STATUS: Reading available - best quality")
+          PY
 
             echo ""
           }
@@ -169,5 +233,5 @@ jobs:
             "29.922190199229075"
 
           echo "======================================"
-          echo "Both lake requests completed."
+          echo "Both lake temperature tests completed."
           echo "======================================"
