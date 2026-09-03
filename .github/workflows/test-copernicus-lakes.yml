@@ -145,43 +145,21 @@ jobs:
 
               var sample = samples[i];
 
-              /*
-               * dataMask is the first check.
-               * It tells us whether this pixel actually
-               * contains source data.
-               */
-
               if (sample.dataMask !== 1) {
                 continue;
               }
-
-              /*
-               * Reject the LSWT NoData value.
-               */
 
               if (sample.LSWT === -32768) {
                 continue;
               }
 
-              /*
-               * Reject pixels with no observations.
-               */
-
               if (sample.NOBS <= 0) {
                 continue;
               }
 
-              /*
-               * Reject QLEVEL 0.
-               */
-
               if (sample.QLEVEL <= 0) {
                 continue;
               }
-
-              /*
-               * Keep the most recent valid observation.
-               */
 
               var currentDate = "";
 
@@ -205,24 +183,13 @@ jobs:
               }
             }
 
-            /*
-             * Four output bands:
-             *
-             * 1 = temperature in Celsius
-             * 2 = number of observations
-             * 3 = quality level
-             * 4 = whether a valid source pixel exists
-             */
-
             if (bestLSWT !== -32768) {
-
               return [
                 bestLSWT * 0.01,
                 bestNOBS,
                 bestQLEVEL,
                 1
               ];
-
             }
 
             return [
@@ -260,9 +227,10 @@ jobs:
             echo "Response received."
             echo ""
 
+            echo "Reading TIFF..."
+
             python3 - "${SAFE_NAME}.tif" "${NAME}" <<'PY'
           import sys
-          import math
           import numpy as np
           import tifffile
 
@@ -274,12 +242,6 @@ jobs:
           print("TIFF shape:", data.shape)
 
           arr = np.asarray(data)
-
-          /*
-           * TIFF should be:
-           *
-           * height x width x 4
-           */
 
           if arr.ndim != 3 or arr.shape[2] != 4:
               print("ERROR: Unexpected TIFF structure.")
@@ -298,17 +260,23 @@ jobs:
           print("")
           print("RESULT FOR:", lake_name)
           print("--------------------------------------")
-          print("Pixels checked:", arr.shape[0] * arr.shape[1])
-          print("Valid LSWT pixels:", valid_count)
+          print(
+              "Pixels checked:",
+              arr.shape[0] * arr.shape[1]
+          )
+          print(
+              "Valid LSWT pixels:",
+              valid_count
+          )
           print("")
 
           if valid_count == 0:
 
               print("NO VALID LSWT PIXELS FOUND.")
               print("")
-              print("This means Copernicus did not return")
-              print("a usable lake-temperature observation")
-              print("anywhere in the test area.")
+              print("Copernicus did not return a usable")
+              print("lake-temperature observation anywhere")
+              print("in the test area.")
               print("")
 
           else:
@@ -330,6 +298,7 @@ jobs:
                   )
 
               print("")
+
               print(
                   f"Minimum temperature: "
                   f"{float(np.min(valid_temps)):.2f} °C"
