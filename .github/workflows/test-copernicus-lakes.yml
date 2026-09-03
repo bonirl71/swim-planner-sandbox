@@ -1,336 +1,105 @@
-name: Test Copernicus Lake Temperature
+name: Test Copernicus Lake Catalogue
 
 on:
   workflow_dispatch:
 
 jobs:
-  test-copernicus:
+  test-catalogue:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Map Copernicus LSWT coverage
-        env:
-          COPERNICUS_CLIENT_ID: ${{ secrets.COPERNICUS_CLIENT_ID }}
-          COPERNICUS_CLIENT_SECRET: ${{ secrets.COPERNICUS_CLIENT_SECRET }}
-
+      - name: Search Copernicus LSWT catalogue
         run: |
           set -e
 
           echo "======================================"
-          echo "Copernicus LSWT Coverage Test"
+          echo "Copernicus LSWT Catalogue Test"
           echo "======================================"
           echo ""
-          echo "Checking a larger area around each lake."
-          echo "Looking for genuine LSWT source pixels."
-          echo ""
 
-          echo "Installing TIFF reader..."
-          python3 -m pip install --quiet tifffile numpy
+          python3 - <<'PY'
+          import requests
+          import json
 
-          echo ""
-          echo "Getting Copernicus access token..."
+          BASE = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
 
-          TOKEN_RESPONSE=$(curl -sS -X POST \
-            "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token" \
-            -H "Content-Type: application/x-www-form-urlencoded" \
-            --data-urlencode "grant_type=client_credentials" \
-            --data-urlencode "client_id=${COPERNICUS_CLIENT_ID}" \
-            --data-urlencode "client_secret=${COPERNICUS_CLIENT_SECRET}")
+          dataset = "lswt-nrt_global_1km_10daily_v1"
 
-          ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
-
-          if [ "$ACCESS_TOKEN" = "null" ] || [ -z "$ACCESS_TOKEN" ]; then
-            echo "ERROR: Authentication failed."
-            echo "$TOKEN_RESPONSE"
-            exit 1
-          fi
-
-          echo "Authentication successful."
-          echo ""
-
-          test_lake() {
-            NAME="$1"
-            LAT="$2"
-            LON="$3"
-
-            SAFE_NAME="${NAME// /_}"
-
-            echo ""
-            echo "######################################"
-            echo "# $NAME"
-            echo "######################################"
-            echo ""
-            echo "Centre latitude:  $LAT"
-            echo "Centre longitude: $LON"
-            echo ""
-            echo "Searching approximately 4 km around"
-            echo "the supplied lake coordinates..."
-            echo ""
-
-            MIN_LON=$(awk "BEGIN {print $LON - 0.04}")
-            MAX_LON=$(awk "BEGIN {print $LON + 0.04}")
-            MIN_LAT=$(awk "BEGIN {print $LAT - 0.04}")
-            MAX_LAT=$(awk "BEGIN {print $LAT + 0.04}")
-
-            REQUEST=$(cat <<EOF
-          {
-            "input": {
-              "bounds": {
-                "properties": {
-                  "crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
-                },
-                "bbox": [
-                  $MIN_LON,
-                  $MIN_LAT,
-                  $MAX_LON,
-                  $MAX_LAT
-                ]
-              },
-              "data": [
-                {
-                  "type": "byoc-401ca642-a169-4783-b1cf-cbd33e98eccb",
-                  "dataFilter": {
-                    "timeRange": {
-                      "from": "2026-05-01T00:00:00Z",
-                      "to": "2026-09-03T23:59:59Z"
-                    }
-                  }
-                }
-              ]
-            },
-            "output": {
-              "width": 9,
-              "height": 9,
-              "responses": [
-                {
-                  "identifier": "default",
-                  "format": {
-                    "type": "image/tiff"
-                  }
-                }
-              ]
-            }
-          }
-          EOF
-          )
-
-            EVALSCRIPT=$(cat <<'EOF'
-          //VERSION=3
-
-          function setup() {
-            return {
-              input: [
-                "LSWT",
-                "NOBS",
-                "QLEVEL",
-                "dataMask"
-              ],
-              mosaicking: Mosaicking.TILE,
-              output: {
-                id: "default",
-                bands: 4,
-                sampleType: "FLOAT32"
-              }
-            };
+          params = {
+              "$filter": (
+                  "Attributes/OData.CSC.StringAttribute/any("
+                  "att:att/Name eq 'datasetIdentifier' and "
+                  "att/OData.CSC.StringAttribute/Value eq "
+                  f"'{dataset}')"
+              ),
+              "$select": "Id,Name,S3Path,GeoFootprint,ContentDate,OriginDate",
+              "$top": "20"
           }
 
-          function evaluatePixel(samples, scenes) {
-
-            var bestLSWT = -32768;
-            var bestNOBS = 0;
-            var bestQLEVEL = 0;
-            var bestDate = "";
-
-            for (var i = 0; i < samples.length; i++) {
-
-              var sample = samples[i];
-
-              if (sample.dataMask !== 1) {
-                continue;
-              }
-
-              if (sample.LSWT === -32768) {
-                continue;
-              }
-
-              if (sample.NOBS <= 0) {
-                continue;
-              }
-
-              if (sample.QLEVEL <= 0) {
-                continue;
-              }
-
-              var currentDate = "";
-
-              if (
-                scenes &&
-                scenes.tiles &&
-                scenes.tiles[i] &&
-                scenes.tiles[i].date
-              ) {
-                currentDate = scenes.tiles[i].date;
-              }
-
-              if (
-                bestDate === "" ||
-                currentDate > bestDate
-              ) {
-                bestLSWT = sample.LSWT;
-                bestNOBS = sample.NOBS;
-                bestQLEVEL = sample.QLEVEL;
-                bestDate = currentDate;
-              }
-            }
-
-            if (bestLSWT !== -32768) {
-              return [
-                bestLSWT * 0.01,
-                bestNOBS,
-                bestQLEVEL,
-                1
-              ];
-            }
-
-            return [
-              -999,
-              0,
-              0,
-              0
-            ];
-          }
-          EOF
-          )
-
-            echo "Requesting Copernicus data..."
-
-            HTTP_CODE=$(curl -sS \
-              -o "${SAFE_NAME}.tif" \
-              -w "%{http_code}" \
-              -X POST \
-              "https://sh.dataspace.copernicus.eu/process/v1" \
-              -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-              -F "request=${REQUEST}" \
-              --form-string "evalscript=${EVALSCRIPT}")
-
-            echo "HTTP status: $HTTP_CODE"
-
-            if [ "$HTTP_CODE" != "200" ]; then
-              echo ""
-              echo "ERROR: Copernicus returned HTTP $HTTP_CODE"
-              echo ""
-              cat "${SAFE_NAME}.tif"
-              echo ""
-              return 1
-            fi
-
-            echo "Response received."
-            echo ""
-
-            echo "Reading TIFF..."
-
-            python3 - "${SAFE_NAME}.tif" "${NAME}" <<'PY'
-          import sys
-          import numpy as np
-          import tifffile
-
-          filename = sys.argv[1]
-          lake_name = sys.argv[2]
-
-          data = tifffile.imread(filename)
-
-          print("TIFF shape:", data.shape)
-
-          arr = np.asarray(data)
-
-          if arr.ndim != 3 or arr.shape[2] != 4:
-              print("ERROR: Unexpected TIFF structure.")
-              print("Shape:", arr.shape)
-              sys.exit(1)
-
-          temperatures = arr[:, :, 0]
-          observations = arr[:, :, 1]
-          quality = arr[:, :, 2]
-          mask = arr[:, :, 3]
-
-          valid = mask == 1
-
-          valid_count = int(np.sum(valid))
-
-          print("")
-          print("RESULT FOR:", lake_name)
-          print("--------------------------------------")
-          print(
-              "Pixels checked:",
-              arr.shape[0] * arr.shape[1]
-          )
-          print(
-              "Valid LSWT pixels:",
-              valid_count
-          )
+          print("Searching dataset:")
+          print(dataset)
           print("")
 
-          if valid_count == 0:
+          response = requests.get(
+              BASE,
+              params=params,
+              timeout=60
+          )
 
-              print("NO VALID LSWT PIXELS FOUND.")
+          print("HTTP status:", response.status_code)
+          print("")
+
+          if response.status_code != 200:
+              print(response.text)
+              raise SystemExit(1)
+
+          data = response.json()
+
+          products = data.get("value", [])
+
+          print("Products returned:", len(products))
+          print("")
+
+          for i, product in enumerate(products, 1):
+
+              print("======================================")
+              print(f"PRODUCT {i}")
+              print("======================================")
+
+              print("Name:")
+              print(product.get("Name"))
+
               print("")
-              print("Copernicus did not return a usable")
-              print("lake-temperature observation anywhere")
-              print("in the test area.")
+              print("ID:")
+              print(product.get("Id"))
+
               print("")
+              print("Origin date:")
+              print(product.get("OriginDate"))
 
-          else:
+              print("")
+              print("Content date:")
+              print(product.get("ContentDate"))
 
-              valid_temps = temperatures[valid]
-              valid_nobs = observations[valid]
-              valid_quality = quality[valid]
+              print("")
+              print("S3 path:")
+              print(product.get("S3Path"))
 
-              print("VALID TEMPERATURES FOUND")
-              print("--------------------------------------")
+              footprint = product.get("GeoFootprint")
 
-              for i, temp in enumerate(valid_temps):
+              print("")
+              print("GeoFootprint present:",
+                    footprint is not None)
 
+              if footprint:
                   print(
-                      f"Pixel {i + 1}: "
-                      f"{float(temp):.2f} °C | "
-                      f"NOBS={int(round(valid_nobs[i]))} | "
-                      f"QLEVEL={int(round(valid_quality[i]))}"
+                      "Geometry type:",
+                      footprint.get("type")
                   )
 
               print("")
 
-              print(
-                  f"Minimum temperature: "
-                  f"{float(np.min(valid_temps)):.2f} °C"
-              )
-
-              print(
-                  f"Maximum temperature: "
-                  f"{float(np.max(valid_temps)):.2f} °C"
-              )
-
-              print(
-                  f"Average temperature: "
-                  f"{float(np.mean(valid_temps)):.2f} °C"
-              )
-
-          print("--------------------------------------")
+          print("======================================")
+          print("CATALOGUE SEARCH COMPLETE")
+          print("======================================")
           PY
-
-            echo ""
-          }
-
-          test_lake \
-            "Blue Lake" \
-            "50.2486488821285" \
-            "30.56133373633814"
-
-          test_lake \
-            "Gloria Lake" \
-            "50.56906891068027" \
-            "29.922190199229075"
-
-          echo ""
-          echo "======================================"
-          echo "COVERAGE TEST COMPLETE"
-          echo "======================================"
