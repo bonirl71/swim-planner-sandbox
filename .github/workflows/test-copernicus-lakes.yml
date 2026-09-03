@@ -1,0 +1,31 @@
+name: Test Copernicus Lake Temperature
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-copernicus:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test Copernicus authentication
+        env:
+          COPERNICUS_CLIENT_ID: ${{ secrets.COPERNICUS_CLIENT_ID }}
+          COPERNICUS_CLIENT_SECRET: ${{ secrets.COPERNICUS_CLIENT_SECRET }}
+        run: |
+          echo "Requesting Copernicus access token..."
+
+          RESPONSE=$(curl -s -X POST \
+            "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            --data-urlencode "grant_type=client_credentials" \
+            --data-urlencode "client_id=${COPERNICUS_CLIENT_ID}" \
+            --data-urlencode "client_secret=${COPERNICUS_CLIENT_SECRET}")
+
+          if echo "$RESPONSE" | grep -q '"access_token"'; then
+            echo "SUCCESS: Copernicus authentication works."
+          else
+            echo "ERROR: Copernicus authentication failed."
+            echo "$RESPONSE"
+            exit 1
+          fi
