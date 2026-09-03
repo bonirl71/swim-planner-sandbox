@@ -18,10 +18,11 @@ jobs:
           echo "======================================"
           echo "Copernicus Lake Temperature Test"
           echo "======================================"
+          echo ""
 
           echo "Getting Copernicus access token..."
 
-          TOKEN_RESPONSE=$(curl -s -X POST \
+          TOKEN_RESPONSE=$(curl -sS -X POST \
             "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token" \
             -H "Content-Type: application/x-www-form-urlencoded" \
             --data-urlencode "grant_type=client_credentials" \
@@ -89,39 +90,66 @@ jobs:
                   }
                 }
               ]
-            },
-            "evalscript": "//VERSION=3
+            }
+          }
+          EOF
+          )
+
+            EVALSCRIPT=$(cat <<'EOF'
+          //VERSION=3
 
           function setup() {
             return {
-              input: [\"LSWT\", \"QLEVEL\", \"NOBS\"],
+              input: [
+                {
+                  bands: ["LSWT", "NOBS", "QLEVEL"]
+                }
+              ],
               output: {
                 bands: 3,
-                sampleType: \"FLOAT32\"
+                sampleType: "FLOAT32"
               }
             };
           }
 
           function evaluatePixel(sample) {
-            return [sample.LSWT, sample.QLEVEL, sample.NOBS];
-          }"
+            return [
+              sample.LSWT,
+              sample.NOBS,
+              sample.QLEVEL
+            ];
           }
           EOF
           )
 
             echo "Requesting LSWT data..."
 
-            curl -sS -X POST \
+            HTTP_CODE=$(curl -sS \
+              -o "${NAME// /_}.tif" \
+              -w "%{http_code}" \
+              -X POST \
               "https://sh.dataspace.copernicus.eu/process/v1" \
               -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-              -H "Content-Type: application/json" \
-              -H "Accept: application/tiff" \
-              --data "$REQUEST" \
-              --output "${NAME// /_}.tif"
+              -F "request=${REQUEST}" \
+              -F "evalscript=${EVALSCRIPT}")
 
-            echo "Response saved."
+            echo "HTTP status: $HTTP_CODE"
 
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "ERROR: Copernicus returned HTTP $HTTP_CODE"
+              echo "Response:"
+              cat "${NAME// /_}.tif"
+              return 1
+            fi
+
+            echo "Response received."
+
+            echo "File information:"
             file "${NAME// /_}.tif"
+
+            echo ""
+            echo "First bytes of response:"
+            xxd -l 32 "${NAME// /_}.tif"
 
             echo ""
           }
