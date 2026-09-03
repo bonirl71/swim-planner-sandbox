@@ -18,9 +18,8 @@ jobs:
           echo "======================================"
           echo "Copernicus Lake Temperature Test"
           echo "======================================"
-          echo ""
 
-          echo "1. Getting Copernicus access token..."
+          echo "Getting Copernicus access token..."
 
           TOKEN_RESPONSE=$(curl -s -X POST \
             "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token" \
@@ -32,12 +31,12 @@ jobs:
           ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
 
           if [ "$ACCESS_TOKEN" = "null" ] || [ -z "$ACCESS_TOKEN" ]; then
-            echo "ERROR: Could not obtain access token."
+            echo "ERROR: Authentication failed."
             echo "$TOKEN_RESPONSE"
             exit 1
           fi
 
-          echo "SUCCESS: Authentication works."
+          echo "Authentication successful."
           echo ""
 
           test_lake() {
@@ -51,77 +50,79 @@ jobs:
             echo "Longitude: $LON"
             echo "======================================"
 
-            # Small bounding box around the lake location.
             MIN_LON=$(awk "BEGIN {print $LON - 0.005}")
             MAX_LON=$(awk "BEGIN {print $LON + 0.005}")
             MIN_LAT=$(awk "BEGIN {print $LAT - 0.005}")
             MAX_LAT=$(awk "BEGIN {print $LAT + 0.005}")
 
-            RESPONSE=$(curl -s -X POST \
+            REQUEST=$(cat <<EOF
+          {
+            "input": {
+              "bounds": {
+                "bbox": [
+                  $MIN_LON,
+                  $MIN_LAT,
+                  $MAX_LON,
+                  $MAX_LAT
+                ]
+              },
+              "data": [
+                {
+                  "type": "byoc-401ca642-a169-4783-b1cf-cbd33e98eccb",
+                  "dataFilter": {
+                    "timeRange": {
+                      "from": "2026-08-01T00:00:00Z",
+                      "to": "2026-09-03T23:59:59Z"
+                    }
+                  }
+                }
+              ]
+            },
+            "output": {
+              "width": 1,
+              "height": 1,
+              "responses": [
+                {
+                  "identifier": "default",
+                  "format": {
+                    "type": "image/tiff"
+                  }
+                }
+              ]
+            },
+            "evalscript": "//VERSION=3
+
+          function setup() {
+            return {
+              input: [\"LSWT\", \"QLEVEL\", \"NOBS\"],
+              output: {
+                bands: 3,
+                sampleType: \"FLOAT32\"
+              }
+            };
+          }
+
+          function evaluatePixel(sample) {
+            return [sample.LSWT, sample.QLEVEL, sample.NOBS];
+          }"
+          }
+          EOF
+          )
+
+            echo "Requesting LSWT data..."
+
+            curl -sS -X POST \
               "https://sh.dataspace.copernicus.eu/process/v1" \
               -H "Authorization: Bearer ${ACCESS_TOKEN}" \
               -H "Content-Type: application/json" \
-              -d "{
-                \"input\": {
-                  \"bounds\": {
-                    \"bbox\": [
-                      ${MIN_LON},
-                      ${MIN_LAT},
-                      ${MAX_LON},
-                      ${MAX_LAT}
-                    ]
-                  },
-                  \"data\": [
-                    {
-                      \"type\": \"byoc-401ca642-a169-4783-b1cf-cbd33e98eccb\",
-                      \"dataFilter\": {
-                        \"timeRange\": {
-                          \"from\": \"2026-08-01T00:00:00Z\",
-                          \"to\": \"2026-09-03T23:59:59Z\"
-                        }
-                      }
-                    }
-                  ]
-                },
-                \"output\": {
-                  \"width\": 1,
-                  \"height\": 1,
-                  \"responses\": [
-                    {
-                      \"identifier\": \"default\",
-                      \"format\": {
-                        \"type\": \"application/json\"
-                      }
-                    }
-                  ]
-                },
-                \"evalscript\": \"//VERSION=3
-function setup() {
-  return {
-    input: [\\"LSWT\\", \\"QLEVEL\\", \\"NOBS\\"],
-    output: {
-      bands: 3,
-      sampleType: \\"FLOAT32\\"
-    }
-  };
-}
+              -H "Accept: application/tiff" \
+              --data "$REQUEST" \
+              --output "${NAME// /_}.tif"
 
-function evaluatePixel(sample) {
-  return [sample.LSWT, sample.QLEVEL, sample.NOBS];
-}\"
-              }")
+            echo "Response saved."
 
-            echo "Copernicus response:"
-            echo "$RESPONSE" | jq .
+            file "${NAME// /_}.tif"
 
-            echo ""
-
-            if echo "$RESPONSE" | jq -e '.error' >/dev/null 2>&1; then
-              echo "ERROR: Copernicus returned an error for $NAME"
-              return 1
-            fi
-
-            echo "Test completed for $NAME"
             echo ""
           }
 
@@ -134,5 +135,5 @@ function evaluatePixel(sample) {
             "29.922190199229075"
 
           echo "======================================"
-          echo "Both lake tests completed."
+          echo "Both lake requests completed."
           echo "======================================"
