@@ -12,6 +12,7 @@ jobs:
         env:
           COPERNICUS_CLIENT_ID: ${{ secrets.COPERNICUS_CLIENT_ID }}
           COPERNICUS_CLIENT_SECRET: ${{ secrets.COPERNICUS_CLIENT_SECRET }}
+
         run: |
           set -e
 
@@ -60,6 +61,9 @@ jobs:
           {
             "input": {
               "bounds": {
+                "properties": {
+                  "crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+                },
                 "bbox": [
                   $MIN_LON,
                   $MIN_LAT,
@@ -74,7 +78,8 @@ jobs:
                     "timeRange": {
                       "from": "2026-08-01T00:00:00Z",
                       "to": "2026-09-03T23:59:59Z"
-                    }
+                    },
+                    "mosaickingOrder": "mostRecent"
                   }
                 }
               ]
@@ -100,12 +105,9 @@ jobs:
 
           function setup() {
             return {
-              input: [
-                {
-                  bands: ["LSWT", "NOBS", "QLEVEL"]
-                }
-              ],
+              input: ["LSWT", "NOBS", "QLEVEL"],
               output: {
+                id: "default",
                 bands: 3,
                 sampleType: "FLOAT32"
               }
@@ -131,19 +133,23 @@ jobs:
               "https://sh.dataspace.copernicus.eu/process/v1" \
               -H "Authorization: Bearer ${ACCESS_TOKEN}" \
               -F "request=${REQUEST}" \
-              -F "evalscript=${EVALSCRIPT}")
+              --form-string "evalscript=${EVALSCRIPT}")
 
             echo "HTTP status: $HTTP_CODE"
 
             if [ "$HTTP_CODE" != "200" ]; then
+              echo ""
               echo "ERROR: Copernicus returned HTTP $HTTP_CODE"
-              echo "Response:"
+              echo ""
+              echo "Response from Copernicus:"
               cat "${NAME// /_}.tif"
+              echo ""
               return 1
             fi
 
             echo "Response received."
 
+            echo ""
             echo "File information:"
             file "${NAME// /_}.tif"
 
