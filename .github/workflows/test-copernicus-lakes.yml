@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Find latest valid lake temperatures
+      - name: Map Copernicus LSWT coverage
         env:
           COPERNICUS_CLIENT_ID: ${{ secrets.COPERNICUS_CLIENT_ID }}
           COPERNICUS_CLIENT_SECRET: ${{ secrets.COPERNICUS_CLIENT_SECRET }}
@@ -17,11 +17,11 @@ jobs:
           set -e
 
           echo "======================================"
-          echo "Copernicus Lake Temperature Search"
+          echo "Copernicus LSWT Coverage Test"
           echo "======================================"
           echo ""
-          echo "Searching for the latest VALID"
-          echo "lake surface temperature observation."
+          echo "Checking a larger area around each lake."
+          echo "Looking for genuine LSWT source pixels."
           echo ""
 
           echo "Installing TIFF reader..."
@@ -56,17 +56,21 @@ jobs:
             SAFE_NAME="${NAME// /_}"
 
             echo ""
-            echo "======================================"
-            echo "$NAME"
-            echo "======================================"
-            echo "Latitude:  $LAT"
-            echo "Longitude: $LON"
+            echo "######################################"
+            echo "# $NAME"
+            echo "######################################"
+            echo ""
+            echo "Centre latitude:  $LAT"
+            echo "Centre longitude: $LON"
+            echo ""
+            echo "Searching approximately 4 km around"
+            echo "the supplied lake coordinates..."
             echo ""
 
-            MIN_LON=$(awk "BEGIN {print $LON - 0.005}")
-            MAX_LON=$(awk "BEGIN {print $LON + 0.005}")
-            MIN_LAT=$(awk "BEGIN {print $LAT - 0.005}")
-            MAX_LAT=$(awk "BEGIN {print $LAT + 0.005}")
+            MIN_LON=$(awk "BEGIN {print $LON - 0.04}")
+            MAX_LON=$(awk "BEGIN {print $LON + 0.04}")
+            MIN_LAT=$(awk "BEGIN {print $LAT - 0.04}")
+            MAX_LAT=$(awk "BEGIN {print $LAT + 0.04}")
 
             REQUEST=$(cat <<EOF
           {
@@ -95,19 +99,13 @@ jobs:
               ]
             },
             "output": {
-              "width": 1,
-              "height": 1,
+              "width": 9,
+              "height": 9,
               "responses": [
                 {
                   "identifier": "default",
                   "format": {
                     "type": "image/tiff"
-                  }
-                },
-                {
-                  "identifier": "userdata",
-                  "format": {
-                    "type": "application/json"
                   }
                 }
               ]
@@ -121,113 +119,123 @@ jobs:
 
           function setup() {
             return {
-              input: ["LSWT", "NOBS", "QLEVEL"],
+              input: [
+                "LSWT",
+                "NOBS",
+                "QLEVEL",
+                "dataMask"
+              ],
               mosaicking: Mosaicking.TILE,
               output: {
                 id: "default",
-                bands: 3,
+                bands: 4,
                 sampleType: "FLOAT32"
               }
             };
           }
 
-          var bestTemperature = -32768;
-          var bestNobs = -128;
-          var bestQuality = 0;
-          var bestDate = null;
+          function evaluatePixel(samples, scenes) {
 
-          function evaluatePixel(samples, scenes, inputMetadata, customData, outputMetadata) {
-
-            var found = false;
+            var bestLSWT = -32768;
+            var bestNOBS = 0;
+            var bestQLEVEL = 0;
+            var bestDate = "";
 
             for (var i = 0; i < samples.length; i++) {
 
               var sample = samples[i];
 
-              var lswt = sample.LSWT;
-              var nobs = sample.NOBS;
-              var quality = sample.QLEVEL;
-
               /*
-               * A valid LSWT must:
-               * - not be the NoData value
-               * - have at least one observation
-               * - have a quality level greater than zero
+               * dataMask is the first check.
+               * It tells us whether this pixel actually
+               * contains source data.
                */
 
+              if (sample.dataMask !== 1) {
+                continue;
+              }
+
+              /*
+               * Reject the LSWT NoData value.
+               */
+
+              if (sample.LSWT === -32768) {
+                continue;
+              }
+
+              /*
+               * Reject pixels with no observations.
+               */
+
+              if (sample.NOBS <= 0) {
+                continue;
+              }
+
+              /*
+               * Reject QLEVEL 0.
+               */
+
+              if (sample.QLEVEL <= 0) {
+                continue;
+              }
+
+              /*
+               * Keep the most recent valid observation.
+               */
+
+              var currentDate = "";
+
               if (
-                lswt !== -32768 &&
-                nobs > 0 &&
-                quality > 0
+                scenes &&
+                scenes.tiles &&
+                scenes.tiles[i] &&
+                scenes.tiles[i].date
               ) {
+                currentDate = scenes.tiles[i].date;
+              }
 
-                /*
-                 * Because TILE mosaicking provides the available
-                 * scenes, keep replacing the result as we move
-                 * through them. The final valid result is therefore
-                 * the most recent valid observation.
-                 */
-
-                bestTemperature = lswt;
-                bestNobs = nobs;
-                bestQuality = quality;
-
-                if (
-                  scenes &&
-                  scenes.tiles &&
-                  scenes.tiles[i] &&
-                  scenes.tiles[i].date
-                ) {
-                  bestDate = scenes.tiles[i].date;
-                }
-
-                found = true;
+              if (
+                bestDate === "" ||
+                currentDate > bestDate
+              ) {
+                bestLSWT = sample.LSWT;
+                bestNOBS = sample.NOBS;
+                bestQLEVEL = sample.QLEVEL;
+                bestDate = currentDate;
               }
             }
 
             /*
-             * Convert the stored LSWT digital number into Celsius.
+             * Four output bands:
              *
-             * Dataset scaling:
-             * LSWT = DN * 0.01 + 273.15 K
-             *
-             * Therefore:
-             * Celsius = DN * 0.01
+             * 1 = temperature in Celsius
+             * 2 = number of observations
+             * 3 = quality level
+             * 4 = whether a valid source pixel exists
              */
 
-            if (found) {
+            if (bestLSWT !== -32768) {
+
               return [
-                bestTemperature * 0.01,
-                bestNobs,
-                bestQuality
+                bestLSWT * 0.01,
+                bestNOBS,
+                bestQLEVEL,
+                1
               ];
+
             }
 
             return [
               -999,
               0,
+              0,
               0
             ];
-          }
-
-          function updateOutputMetadata(
-            scenes,
-            inputMetadata,
-            outputMetadata
-          ) {
-
-            outputMetadata.userData = {
-              "latestValidDate": bestDate,
-              "rawLSWT": bestTemperature,
-              "observations": bestNobs,
-              "quality": bestQuality
-            };
           }
           EOF
           )
 
-            echo "Requesting Copernicus data from May 2026 onwards..."
-            echo ""
+            echo "Requesting Copernicus data..."
 
             HTTP_CODE=$(curl -sS \
               -o "${SAFE_NAME}.tif" \
@@ -252,8 +260,6 @@ jobs:
             echo "Response received."
             echo ""
 
-            echo "Reading temperature result..."
-
             python3 - "${SAFE_NAME}.tif" "${NAME}" <<'PY'
           import sys
           import math
@@ -265,110 +271,97 @@ jobs:
 
           data = tifffile.imread(filename)
 
-          print("Raw TIFF shape:", data.shape)
-          print("Returned values:", data)
+          print("TIFF shape:", data.shape)
 
-          values = np.asarray(data).reshape(-1)
+          arr = np.asarray(data)
 
-          if len(values) < 3:
-              print("ERROR: Expected 3 output values.")
+          /*
+           * TIFF should be:
+           *
+           * height x width x 4
+           */
+
+          if arr.ndim != 3 or arr.shape[2] != 4:
+              print("ERROR: Unexpected TIFF structure.")
+              print("Shape:", arr.shape)
               sys.exit(1)
 
-          temperature = float(values[0])
-          observations = float(values[1])
-          quality = float(values[2])
+          temperatures = arr[:, :, 0]
+          observations = arr[:, :, 1]
+          quality = arr[:, :, 2]
+          mask = arr[:, :, 3]
+
+          valid = mask == 1
+
+          valid_count = int(np.sum(valid))
 
           print("")
           print("RESULT FOR:", lake_name)
           print("--------------------------------------")
+          print("Pixels checked:", arr.shape[0] * arr.shape[1])
+          print("Valid LSWT pixels:", valid_count)
+          print("")
 
-          if not math.isfinite(temperature) or temperature <= -900:
-              print("Temperature: NO VALID DATA")
+          if valid_count == 0:
+
+              print("NO VALID LSWT PIXELS FOUND.")
+              print("")
+              print("This means Copernicus did not return")
+              print("a usable lake-temperature observation")
+              print("anywhere in the test area.")
+              print("")
+
           else:
-              print(f"Temperature: {temperature:.2f} °C")
 
-          print(f"Observations: {observations:.0f}")
-          print(f"Quality level: {quality:.0f}")
+              valid_temps = temperatures[valid]
+              valid_nobs = observations[valid]
+              valid_quality = quality[valid]
 
-          quality_names = {
-              0: "NO DATA",
-              1: "BAD DATA",
-              2: "WORST QUALITY",
-              3: "LOW QUALITY",
-              4: "ACCEPTABLE QUALITY",
-              5: "BEST QUALITY"
-          }
+              print("VALID TEMPERATURES FOUND")
+              print("--------------------------------------")
 
-          q = int(round(quality))
+              for i, temp in enumerate(valid_temps):
 
-          print(
-              "Quality assessment:",
-              quality_names.get(q, "UNKNOWN")
-          )
+                  print(
+                      f"Pixel {i + 1}: "
+                      f"{float(temp):.2f} °C | "
+                      f"NOBS={int(round(valid_nobs[i]))} | "
+                      f"QLEVEL={int(round(valid_quality[i]))}"
+                  )
+
+              print("")
+              print(
+                  f"Minimum temperature: "
+                  f"{float(np.min(valid_temps)):.2f} °C"
+              )
+
+              print(
+                  f"Maximum temperature: "
+                  f"{float(np.max(valid_temps)):.2f} °C"
+              )
+
+              print(
+                  f"Average temperature: "
+                  f"{float(np.mean(valid_temps)):.2f} °C"
+              )
 
           print("--------------------------------------")
           PY
 
             echo ""
-
-            echo "======================================"
-            echo "Copernicus userdata"
-            echo "======================================"
-
-            USERDATA_REQUEST=$(cat <<EOF
-          {
-            "input": {
-              "bounds": {
-                "properties": {
-                  "crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
-                },
-                "bbox": [
-                  $MIN_LON,
-                  $MIN_LAT,
-                  $MAX_LON,
-                  $MAX_LAT
-                ]
-              },
-              "data": [
-                {
-                  "type": "byoc-401ca642-a169-4783-b1cf-cbd33e98eccb",
-                  "dataFilter": {
-                    "timeRange": {
-                      "from": "2026-05-01T00:00:00Z",
-                      "to": "2026-09-03T23:59:59Z"
-                    }
-                  }
-                }
-              ]
-            },
-            "output": {
-              "width": 1,
-              "height": 1,
-              "responses": [
-                {
-                  "identifier": "userdata",
-                  "format": {
-                    "type": "application/json"
-                  }
-                }
-              ]
-            }
-          }
-          EOF
-          )
-
-            echo ""
           }
 
-          test_lake "Blue Lake" \
+          test_lake \
+            "Blue Lake" \
             "50.2486488821285" \
             "30.56133373633814"
 
-          test_lake "Gloria Lake" \
+          test_lake \
+            "Gloria Lake" \
             "50.56906891068027" \
             "29.922190199229075"
 
           echo ""
           echo "======================================"
-          echo "SEARCH COMPLETE"
+          echo "COVERAGE TEST COMPLETE"
           echo "======================================"
