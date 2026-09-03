@@ -8,24 +8,131 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Test Copernicus authentication
+      - name: Test Blue Lake and Gloria Lake
         env:
           COPERNICUS_CLIENT_ID: ${{ secrets.COPERNICUS_CLIENT_ID }}
           COPERNICUS_CLIENT_SECRET: ${{ secrets.COPERNICUS_CLIENT_SECRET }}
         run: |
-          echo "Requesting Copernicus access token..."
+          set -e
 
-          RESPONSE=$(curl -s -X POST \
+          echo "======================================"
+          echo "Copernicus Lake Temperature Test"
+          echo "======================================"
+          echo ""
+
+          echo "1. Getting Copernicus access token..."
+
+          TOKEN_RESPONSE=$(curl -s -X POST \
             "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token" \
             -H "Content-Type: application/x-www-form-urlencoded" \
             --data-urlencode "grant_type=client_credentials" \
             --data-urlencode "client_id=${COPERNICUS_CLIENT_ID}" \
             --data-urlencode "client_secret=${COPERNICUS_CLIENT_SECRET}")
 
-          if echo "$RESPONSE" | grep -q '"access_token"'; then
-            echo "SUCCESS: Copernicus authentication works."
-          else
-            echo "ERROR: Copernicus authentication failed."
-            echo "$RESPONSE"
+          ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
+
+          if [ "$ACCESS_TOKEN" = "null" ] || [ -z "$ACCESS_TOKEN" ]; then
+            echo "ERROR: Could not obtain access token."
+            echo "$TOKEN_RESPONSE"
             exit 1
           fi
+
+          echo "SUCCESS: Authentication works."
+          echo ""
+
+          test_lake() {
+            NAME="$1"
+            LAT="$2"
+            LON="$3"
+
+            echo "======================================"
+            echo "$NAME"
+            echo "Latitude:  $LAT"
+            echo "Longitude: $LON"
+            echo "======================================"
+
+            # Small bounding box around the lake location.
+            MIN_LON=$(awk "BEGIN {print $LON - 0.005}")
+            MAX_LON=$(awk "BEGIN {print $LON + 0.005}")
+            MIN_LAT=$(awk "BEGIN {print $LAT - 0.005}")
+            MAX_LAT=$(awk "BEGIN {print $LAT + 0.005}")
+
+            RESPONSE=$(curl -s -X POST \
+              "https://sh.dataspace.copernicus.eu/process/v1" \
+              -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"input\": {
+                  \"bounds\": {
+                    \"bbox\": [
+                      ${MIN_LON},
+                      ${MIN_LAT},
+                      ${MAX_LON},
+                      ${MAX_LAT}
+                    ]
+                  },
+                  \"data\": [
+                    {
+                      \"type\": \"byoc-401ca642-a169-4783-b1cf-cbd33e98eccb\",
+                      \"dataFilter\": {
+                        \"timeRange\": {
+                          \"from\": \"2026-08-01T00:00:00Z\",
+                          \"to\": \"2026-09-03T23:59:59Z\"
+                        }
+                      }
+                    }
+                  ]
+                },
+                \"output\": {
+                  \"width\": 1,
+                  \"height\": 1,
+                  \"responses\": [
+                    {
+                      \"identifier\": \"default\",
+                      \"format\": {
+                        \"type\": \"application/json\"
+                      }
+                    }
+                  ]
+                },
+                \"evalscript\": \"//VERSION=3
+function setup() {
+  return {
+    input: [\\"LSWT\\", \\"QLEVEL\\", \\"NOBS\\"],
+    output: {
+      bands: 3,
+      sampleType: \\"FLOAT32\\"
+    }
+  };
+}
+
+function evaluatePixel(sample) {
+  return [sample.LSWT, sample.QLEVEL, sample.NOBS];
+}\"
+              }")
+
+            echo "Copernicus response:"
+            echo "$RESPONSE" | jq .
+
+            echo ""
+
+            if echo "$RESPONSE" | jq -e '.error' >/dev/null 2>&1; then
+              echo "ERROR: Copernicus returned an error for $NAME"
+              return 1
+            fi
+
+            echo "Test completed for $NAME"
+            echo ""
+          }
+
+          test_lake "Blue Lake" \
+            "50.2486488821285" \
+            "30.56133373633814"
+
+          test_lake "Gloria Lake" \
+            "50.56906891068027" \
+            "29.922190199229075"
+
+          echo "======================================"
+          echo "Both lake tests completed."
+          echo "======================================"
