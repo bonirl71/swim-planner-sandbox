@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Test Blue Lake and Gloria Lake
+      - name: Find latest valid lake temperatures
         env:
           COPERNICUS_CLIENT_ID: ${{ secrets.COPERNICUS_CLIENT_ID }}
           COPERNICUS_CLIENT_SECRET: ${{ secrets.COPERNICUS_CLIENT_SECRET }}
@@ -17,8 +17,11 @@ jobs:
           set -e
 
           echo "======================================"
-          echo "Copernicus Lake Temperature Test"
+          echo "Copernicus Lake Temperature Search"
           echo "======================================"
+          echo ""
+          echo "Searching for the latest VALID"
+          echo "lake surface temperature observation."
           echo ""
 
           echo "Installing TIFF reader..."
@@ -52,11 +55,13 @@ jobs:
 
             SAFE_NAME="${NAME// /_}"
 
+            echo ""
             echo "======================================"
             echo "$NAME"
+            echo "======================================"
             echo "Latitude:  $LAT"
             echo "Longitude: $LON"
-            echo "======================================"
+            echo ""
 
             MIN_LON=$(awk "BEGIN {print $LON - 0.005}")
             MAX_LON=$(awk "BEGIN {print $LON + 0.005}")
@@ -82,10 +87,9 @@ jobs:
                   "type": "byoc-401ca642-a169-4783-b1cf-cbd33e98eccb",
                   "dataFilter": {
                     "timeRange": {
-                      "from": "2026-08-01T00:00:00Z",
+                      "from": "2026-05-01T00:00:00Z",
                       "to": "2026-09-03T23:59:59Z"
-                    },
-                    "mosaickingOrder": "mostRecent"
+                    }
                   }
                 }
               ]
@@ -98,6 +102,12 @@ jobs:
                   "identifier": "default",
                   "format": {
                     "type": "image/tiff"
+                  }
+                },
+                {
+                  "identifier": "userdata",
+                  "format": {
+                    "type": "application/json"
                   }
                 }
               ]
@@ -112,6 +122,7 @@ jobs:
           function setup() {
             return {
               input: ["LSWT", "NOBS", "QLEVEL"],
+              mosaicking: Mosaicking.TILE,
               output: {
                 id: "default",
                 bands: 3,
@@ -120,17 +131,103 @@ jobs:
             };
           }
 
-          function evaluatePixel(sample) {
+          var bestTemperature = -32768;
+          var bestNobs = -128;
+          var bestQuality = 0;
+          var bestDate = null;
+
+          function evaluatePixel(samples, scenes, inputMetadata, customData, outputMetadata) {
+
+            var found = false;
+
+            for (var i = 0; i < samples.length; i++) {
+
+              var sample = samples[i];
+
+              var lswt = sample.LSWT;
+              var nobs = sample.NOBS;
+              var quality = sample.QLEVEL;
+
+              /*
+               * A valid LSWT must:
+               * - not be the NoData value
+               * - have at least one observation
+               * - have a quality level greater than zero
+               */
+
+              if (
+                lswt !== -32768 &&
+                nobs > 0 &&
+                quality > 0
+              ) {
+
+                /*
+                 * Because TILE mosaicking provides the available
+                 * scenes, keep replacing the result as we move
+                 * through them. The final valid result is therefore
+                 * the most recent valid observation.
+                 */
+
+                bestTemperature = lswt;
+                bestNobs = nobs;
+                bestQuality = quality;
+
+                if (
+                  scenes &&
+                  scenes.tiles &&
+                  scenes.tiles[i] &&
+                  scenes.tiles[i].date
+                ) {
+                  bestDate = scenes.tiles[i].date;
+                }
+
+                found = true;
+              }
+            }
+
+            /*
+             * Convert the stored LSWT digital number into Celsius.
+             *
+             * Dataset scaling:
+             * LSWT = DN * 0.01 + 273.15 K
+             *
+             * Therefore:
+             * Celsius = DN * 0.01
+             */
+
+            if (found) {
+              return [
+                bestTemperature * 0.01,
+                bestNobs,
+                bestQuality
+              ];
+            }
+
             return [
-              sample.LSWT * 0.01 - 273.15,
-              sample.NOBS,
-              sample.QLEVEL
+              -999,
+              0,
+              0
             ];
+          }
+
+          function updateOutputMetadata(
+            scenes,
+            inputMetadata,
+            outputMetadata
+          ) {
+
+            outputMetadata.userData = {
+              "latestValidDate": bestDate,
+              "rawLSWT": bestTemperature,
+              "observations": bestNobs,
+              "quality": bestQuality
+            };
           }
           EOF
           )
 
-            echo "Requesting LSWT data..."
+            echo "Requesting Copernicus data from May 2026 onwards..."
+            echo ""
 
             HTTP_CODE=$(curl -sS \
               -o "${SAFE_NAME}.tif" \
@@ -147,7 +244,6 @@ jobs:
               echo ""
               echo "ERROR: Copernicus returned HTTP $HTTP_CODE"
               echo ""
-              echo "Response from Copernicus:"
               cat "${SAFE_NAME}.tif"
               echo ""
               return 1
@@ -156,7 +252,7 @@ jobs:
             echo "Response received."
             echo ""
 
-            echo "Reading temperature values..."
+            echo "Reading temperature result..."
 
             python3 - "${SAFE_NAME}.tif" "${NAME}" <<'PY'
           import sys
@@ -170,12 +266,12 @@ jobs:
           data = tifffile.imread(filename)
 
           print("Raw TIFF shape:", data.shape)
-          print("Raw values:", data)
+          print("Returned values:", data)
 
           values = np.asarray(data).reshape(-1)
 
           if len(values) < 3:
-              print("ERROR: Expected 3 values but received fewer.")
+              print("ERROR: Expected 3 output values.")
               sys.exit(1)
 
           temperature = float(values[0])
@@ -186,15 +282,13 @@ jobs:
           print("RESULT FOR:", lake_name)
           print("--------------------------------------")
 
-          if not math.isfinite(temperature):
-              print("Temperature: NO DATA")
+          if not math.isfinite(temperature) or temperature <= -900:
+              print("Temperature: NO VALID DATA")
           else:
               print(f"Temperature: {temperature:.2f} °C")
 
           print(f"Observations: {observations:.0f}")
           print(f"Quality level: {quality:.0f}")
-
-          print("")
 
           quality_names = {
               0: "NO DATA",
@@ -207,19 +301,61 @@ jobs:
 
           q = int(round(quality))
 
-          print("Quality assessment:", quality_names.get(q, "UNKNOWN"))
+          print(
+              "Quality assessment:",
+              quality_names.get(q, "UNKNOWN")
+          )
 
-          if not math.isfinite(temperature) or q == 0:
-              print("STATUS: No usable temperature reading")
-          elif q <= 2:
-              print("STATUS: Reading exists but quality is poor")
-          elif q == 3:
-              print("STATUS: Reading available - low quality")
-          elif q == 4:
-              print("STATUS: Reading available - acceptable quality")
-          elif q == 5:
-              print("STATUS: Reading available - best quality")
+          print("--------------------------------------")
           PY
+
+            echo ""
+
+            echo "======================================"
+            echo "Copernicus userdata"
+            echo "======================================"
+
+            USERDATA_REQUEST=$(cat <<EOF
+          {
+            "input": {
+              "bounds": {
+                "properties": {
+                  "crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+                },
+                "bbox": [
+                  $MIN_LON,
+                  $MIN_LAT,
+                  $MAX_LON,
+                  $MAX_LAT
+                ]
+              },
+              "data": [
+                {
+                  "type": "byoc-401ca642-a169-4783-b1cf-cbd33e98eccb",
+                  "dataFilter": {
+                    "timeRange": {
+                      "from": "2026-05-01T00:00:00Z",
+                      "to": "2026-09-03T23:59:59Z"
+                    }
+                  }
+                }
+              ]
+            },
+            "output": {
+              "width": 1,
+              "height": 1,
+              "responses": [
+                {
+                  "identifier": "userdata",
+                  "format": {
+                    "type": "application/json"
+                  }
+                }
+              ]
+            }
+          }
+          EOF
+          )
 
             echo ""
           }
@@ -232,6 +368,7 @@ jobs:
             "50.56906891068027" \
             "29.922190199229075"
 
+          echo ""
           echo "======================================"
-          echo "Both lake temperature tests completed."
+          echo "SEARCH COMPLETE"
           echo "======================================"
