@@ -1,48 +1,35 @@
-name: Test Copernicus Processed Lakes
+name: Test Landsat Lake Temperature
 
 on:
   workflow_dispatch:
 
 jobs:
-  test-processed-lakes:
+  test-landsat:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check Copernicus processed lake list
+      - name: Test Landsat surface temperature
         run: |
           set -e
 
           echo "======================================"
-          echo "Copernicus LSWT Processed Lake Test"
+          echo "Landsat Lake Temperature Test"
           echo "======================================"
           echo ""
-
-          URL="https://land.copernicus.eu/en/technical-library/list-of-processed-lakes-lake-surface-water-temperature-nrt-version-1/%40%40download/file"
-
-          echo "Downloading official Copernicus"
-          echo "LSWT processed-lake list..."
+          echo "Searching Landsat 8/9 Surface Temperature"
+          echo "products for Blue Lake and Gloria Lake."
           echo ""
 
-          curl -L --fail \
-            "$URL" \
-            -o processed_lakes.csv
+          python3 -m pip install --quiet requests rasterio numpy
 
-          echo "Download successful."
-          echo ""
-
-          echo "File information:"
-          file processed_lakes.csv
-          echo ""
-
-          echo "First 10 lines:"
-          head -10 processed_lakes.csv
-          echo ""
-
-          python3 - <<'PY'
-          import csv
+          python3 <<'PY'
+          import requests
+          import rasterio
+          import numpy as np
           import math
+          import sys
 
-          filename = "processed_lakes.csv"
+          STAC_SEARCH = "https://landsatlook.usgs.gov/stac-server/search"
 
           lakes = [
               {
@@ -57,149 +44,319 @@ jobs:
               }
           ]
 
-          print("")
-          print("======================================")
-          print("SEARCHING COPERNICUS LAKE LIST")
-          print("======================================")
-          print("")
+          def find_asset(assets, possible_names):
 
-          with open(
-              filename,
-              "r",
-              encoding="utf-8-sig",
-              errors="replace",
-              newline=""
-          ) as f:
+              for name in possible_names:
+                  if name in assets:
+                      return assets[name]
 
-              sample = f.read(5000)
-              f.seek(0)
+              for key, asset in assets.items():
 
-              try:
-                  dialect = csv.Sniffer().sniff(sample)
-              except csv.Error:
-                  dialect = csv.excel
+                  text = (
+                      str(key) + " " +
+                      str(asset.get("title", "")) + " " +
+                      str(asset.get("description", ""))
+                  ).lower()
 
-              reader = csv.DictReader(
-                  f,
-                  dialect=dialect
-              )
+                  for name in possible_names:
+                      if name.lower() in text:
+                          return asset
 
-              rows = list(reader)
+              return None
 
-          print("Rows in file:", len(rows))
-          print("")
+          def sample_temperature(asset_url, lon, lat):
 
-          if not rows:
-              print("ERROR: No rows found.")
-              raise SystemExit(1)
+              print("")
+              print("Opening surface-temperature COG...")
+              print(asset_url)
+              print("")
 
-          print("CSV columns:")
-          for column in rows[0].keys():
-              print(" -", column)
+              with rasterio.open(asset_url) as src:
 
-          print("")
+                  print("Raster CRS:", src.crs)
+                  print("Raster size:", src.width, "x", src.height)
+                  print("Raster resolution:", src.res)
+                  print("Raster nodata:", src.nodata)
 
-          def normalise(value):
-              if value is None:
-                  return ""
-              return str(value).strip().lower()
+                  try:
+                      row, col = src.index(lon, lat)
 
-          def numeric(value):
-              try:
-                  return float(value)
-              except:
-                  return None
+                      print("Pixel row:", row)
+                      print("Pixel column:", col)
+
+                      if (
+                          row < 0 or
+                          row >= src.height or
+                          col < 0 or
+                          col >= src.width
+                      ):
+                          print("Coordinate is outside raster.")
+                          return None
+
+                      value = src.read(
+                          1,
+                          window=((row, row + 1), (col, col + 1))
+                      )[0, 0]
+
+                      print("Raw ST DN:", value)
+
+                      if value == 0:
+                          print("This is Landsat NoData.")
+                          return None
+
+                      if not math.isfinite(float(value)):
+                          print("Invalid numeric value.")
+                          return None
+
+                      dn = float(value)
+
+                      kelvin = (
+                          dn * 0.00341802
+                      ) + 149.0
+
+                      celsius = kelvin - 273.15
+
+                      print("")
+                      print("Calculated temperature:")
+                      print(f"Kelvin:  {kelvin:.2f} K")
+                      print(f"Celsius: {celsius:.2f} °C")
+
+                      return celsius
+
+                  except Exception as exc:
+
+                      print("")
+                      print("Could not sample pixel:")
+                      print(str(exc))
+
+                      return None
 
           for lake in lakes:
 
               name = lake["name"]
-              target_lat = lake["lat"]
-              target_lon = lake["lon"]
+              lat = lake["lat"]
+              lon = lake["lon"]
 
+              print("")
               print("")
               print("######################################")
-              print(name)
+              print(f"# {name}")
               print("######################################")
               print("")
-
-              name_matches = []
-
-              for row in rows:
-
-                  text = " ".join(
-                      normalise(v)
-                      for v in row.values()
-                      if v is not None
-                  )
-
-                  if "blue lake" in text if name == "Blue Lake" else "gloria lake" in text:
-                      name_matches.append(row)
-
-              print("Name matches:", len(name_matches))
-
-              if name_matches:
-
-                  for row in name_matches[:10]:
-                      print("")
-                      print("MATCH:")
-                      for key, value in row.items():
-                          print(f"{key}: {value}")
-
+              print("Latitude:", lat)
+              print("Longitude:", lon)
               print("")
 
-              coordinate_matches = []
-
-              for row in rows:
-
-                  values = list(row.values())
-
-                  nums = [
-                      numeric(v)
-                      for v in values
+              search_request = {
+                  "collections": [
+                      "landsat-c2l2-st"
+                  ],
+                  "datetime": "2026-05-01T00:00:00Z/2026-09-03T23:59:59Z",
+                  "intersects": {
+                      "type": "Point",
+                      "coordinates": [
+                          lon,
+                          lat
+                      ]
+                  },
+                  "limit": 10,
+                  "sortby": [
+                      {
+                          "field": "properties.datetime",
+                          "direction": "desc"
+                      }
                   ]
+              }
 
-                  nums = [
-                      n for n in nums
-                      if n is not None and math.isfinite(n)
-                  ]
+              print("Searching USGS Landsat STAC...")
+              print("")
 
-                  lat_match = any(
-                      abs(n - target_lat) < 0.02
-                      for n in nums
-                  )
-
-                  lon_match = any(
-                      abs(n - target_lon) < 0.02
-                      for n in nums
-                  )
-
-                  if lat_match and lon_match:
-                      coordinate_matches.append(row)
-
-              print(
-                  "Coordinate matches within ~2 km:",
-                  len(coordinate_matches)
+              response = requests.post(
+                  STAC_SEARCH,
+                  json=search_request,
+                  timeout=60
               )
 
-              if coordinate_matches:
+              print("HTTP status:", response.status_code)
 
-                  for row in coordinate_matches[:10]:
-
-                      print("")
-                      print("COORDINATE MATCH:")
-
-                      for key, value in row.items():
-                          print(f"{key}: {value}")
-
-              if not name_matches and not coordinate_matches:
+              if response.status_code != 200:
 
                   print("")
+                  print("ERROR:")
+                  print(response.text)
+                  continue
+
+              results = response.json()
+
+              features = results.get("features", [])
+
+              print("")
+              print("Landsat scenes found:", len(features))
+              print("")
+
+              if not features:
+
+                  print("NO LANDSAT SCENES FOUND.")
+                  continue
+
+              valid_temperature_found = False
+
+              for index, item in enumerate(features, 1):
+
+                  print("")
+                  print("--------------------------------------")
+                  print(f"SCENE {index}")
+                  print("--------------------------------------")
+
+                  print("Item ID:")
+                  print(item.get("id"))
+
+                  print("")
+                  print("Date:")
+                  print(item.get("properties", {}).get("datetime"))
+
+                  print("")
+                  print("Platform:")
                   print(
-                      "NO MATCH FOUND for this lake."
+                      item.get(
+                          "properties",
+                          {}
+                      ).get("platform")
                   )
 
+                  print("")
+                  print("Cloud cover:")
+                  print(
+                      item.get(
+                          "properties",
+                          {}
+                      ).get("eo:cloud_cover")
+                  )
+
+                  assets = item.get("assets", {})
+
+                  print("")
+                  print("Assets containing temperature data:")
+
+                  for key, asset in assets.items():
+
+                      text = (
+                          str(key) + " " +
+                          str(asset.get("title", "")) + " " +
+                          str(asset.get("description", ""))
+                      ).lower()
+
+                      if (
+                          "temperature" in text or
+                          "st_b10" in text or
+                          "lwir" in text
+                      ):
+
+                          print(
+                              " -",
+                              key,
+                              "=>",
+                              asset.get("href")
+                          )
+
+                  st_asset = find_asset(
+                      assets,
+                      [
+                          "ST_B10",
+                          "st_b10",
+                          "lwir11",
+                          "lwir",
+                          "st",
+                          "surface_temperature"
+                      ]
+                  )
+
+                  if st_asset is None:
+
+                      print("")
+                      print(
+                          "No obvious surface-temperature "
+                          "asset found in this scene."
+                      )
+
+                      continue
+
+                  href = st_asset.get("href")
+
+                  if not href:
+
+                      print("Temperature asset has no URL.")
+                      continue
+
+                  print("")
+                  print("Selected temperature asset:")
+                  print(href)
+
+                  try:
+
+                      temperature = sample_temperature(
+                          href,
+                          lon,
+                          lat
+                      )
+
+                      if temperature is not None:
+
+                          print("")
+                          print("######################################")
+                          print("VALID LANDSAT TEMPERATURE FOUND")
+                          print("######################################")
+                          print("")
+                          print(f"Lake: {name}")
+                          print(
+                              f"Temperature: "
+                              f"{temperature:.2f} °C"
+                          )
+                          print(
+                              "Scene:",
+                              item.get("id")
+                          )
+                          print(
+                              "Date:",
+                              item.get(
+                                  "properties",
+                                  {}
+                              ).get("datetime")
+                          )
+                          print("")
+
+                          valid_temperature_found = True
+
+                          break
+
+                  except Exception as exc:
+
+                      print("")
+                      print(
+                          "Error reading temperature asset:"
+                      )
+                      print(str(exc))
+
+              print("")
+              print("======================================")
+
+              if valid_temperature_found:
+
+                  print(
+                      f"{name}: SUCCESS"
+                  )
+
+              else:
+
+                  print(
+                      f"{name}: NO VALID TEMPERATURE FOUND"
+                  )
+
+              print("======================================")
+
           print("")
-          print("======================================")
-          print("PROCESSED LAKE TEST COMPLETE")
-          print("======================================")
+          print("")
+          print("######################################")
+          print("LANDSAT TEST COMPLETE")
+          print("######################################")
           PY
