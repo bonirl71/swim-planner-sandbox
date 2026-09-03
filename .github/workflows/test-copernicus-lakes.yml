@@ -1,146 +1,205 @@
-name: Test Copernicus Lake Catalogue
+name: Test Copernicus Processed Lakes
 
 on:
   workflow_dispatch:
 
 jobs:
-  test-catalogue:
+  test-processed-lakes:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Search LSWT coverage at lake coordinates
+      - name: Check Copernicus processed lake list
         run: |
           set -e
 
           echo "======================================"
-          echo "Copernicus LSWT Coverage Test"
+          echo "Copernicus LSWT Processed Lake Test"
           echo "======================================"
           echo ""
 
+          URL="https://land.copernicus.eu/en/technical-library/list-of-processed-lakes-lake-surface-water-temperature-nrt-version-1/%40%40download/file"
+
+          echo "Downloading official Copernicus"
+          echo "LSWT processed-lake list..."
+          echo ""
+
+          curl -L --fail \
+            "$URL" \
+            -o processed_lakes.csv
+
+          echo "Download successful."
+          echo ""
+
+          echo "File information:"
+          file processed_lakes.csv
+          echo ""
+
+          echo "First 10 lines:"
+          head -10 processed_lakes.csv
+          echo ""
+
           python3 - <<'PY'
-          import requests
-          from urllib.parse import quote
+          import csv
+          import math
 
-          BASE = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
-
-          DATASET = "lswt-nrt_global_1km_10daily_v1"
+          filename = "processed_lakes.csv"
 
           lakes = [
-              (
-                  "Blue Lake",
-                  50.2486488821285,
-                  30.56133373633814
-              ),
-              (
-                  "Gloria Lake",
-                  50.56906891068027,
-                  29.922190199229075
-              )
+              {
+                  "name": "Blue Lake",
+                  "lat": 50.2486488821285,
+                  "lon": 30.56133373633814
+              },
+              {
+                  "name": "Gloria Lake",
+                  "lat": 50.56906891068027,
+                  "lon": 29.922190199229075
+              }
           ]
 
-          for name, lat, lon in lakes:
+          print("")
+          print("======================================")
+          print("SEARCHING COPERNICUS LAKE LIST")
+          print("======================================")
+          print("")
+
+          with open(
+              filename,
+              "r",
+              encoding="utf-8-sig",
+              errors="replace",
+              newline=""
+          ) as f:
+
+              sample = f.read(5000)
+              f.seek(0)
+
+              try:
+                  dialect = csv.Sniffer().sniff(sample)
+              except csv.Error:
+                  dialect = csv.excel
+
+              reader = csv.DictReader(
+                  f,
+                  dialect=dialect
+              )
+
+              rows = list(reader)
+
+          print("Rows in file:", len(rows))
+          print("")
+
+          if not rows:
+              print("ERROR: No rows found.")
+              raise SystemExit(1)
+
+          print("CSV columns:")
+          for column in rows[0].keys():
+              print(" -", column)
+
+          print("")
+
+          def normalise(value):
+              if value is None:
+                  return ""
+              return str(value).strip().lower()
+
+          def numeric(value):
+              try:
+                  return float(value)
+              except:
+                  return None
+
+          for lake in lakes:
+
+              name = lake["name"]
+              target_lat = lake["lat"]
+              target_lon = lake["lon"]
 
               print("")
               print("######################################")
               print(name)
               print("######################################")
               print("")
-              print("Latitude:", lat)
-              print("Longitude:", lon)
-              print("")
 
-              point = f"POINT({lon} {lat})"
+              name_matches = []
 
-              filter_text = (
-                  "Collection/Name eq 'CLMS' and "
-                  "Attributes/OData.CSC.StringAttribute/any("
-                  "att:att/Name eq 'datasetIdentifier' and "
-                  f"att/OData.CSC.StringAttribute/Value eq '{DATASET}') and "
-                  f"OData.CSC.Intersects(area=geography'SRID=4326;{point}') and "
-                  "ContentDate/Start gt 2026-05-01T00:00:00.000Z and "
-                  "ContentDate/Start lt 2026-09-04T00:00:00.000Z"
-              )
+              for row in rows:
 
-              params = {
-                  "$filter": filter_text,
-                  "$select": (
-                      "Id,Name,S3Path,"
-                      "GeoFootprint,ContentDate,OriginDate"
-                  ),
-                  "$orderby": "ContentDate/Start desc",
-                  "$top": "20"
-              }
-
-              print("Searching catalogue...")
-              print("")
-
-              response = requests.get(
-                  BASE,
-                  params=params,
-                  timeout=60
-              )
-
-              print("HTTP status:", response.status_code)
-              print("")
-
-              if response.status_code != 200:
-                  print("ERROR:")
-                  print(response.text)
-                  continue
-
-              products = response.json().get("value", [])
-
-              print("Products intersecting this coordinate:")
-              print(len(products))
-              print("")
-
-              if not products:
-                  print("NO LSWT PRODUCTS FOUND")
-                  print("")
-                  print(
-                      "The Copernicus catalogue contains no "
-                      "LSWT product whose footprint intersects "
-                      "this coordinate during the requested period."
+                  text = " ".join(
+                      normalise(v)
+                      for v in row.values()
+                      if v is not None
                   )
-                  continue
 
-              print("LSWT PRODUCTS FOUND")
-              print("======================================")
+                  if "blue lake" in text if name == "Blue Lake" else "gloria lake" in text:
+                      name_matches.append(row)
 
-              for i, product in enumerate(products, 1):
+              print("Name matches:", len(name_matches))
 
-                  print("")
-                  print(f"PRODUCT {i}")
-                  print("--------------------------------------")
+              if name_matches:
 
-                  print("Name:")
-                  print(product.get("Name"))
+                  for row in name_matches[:10]:
+                      print("")
+                      print("MATCH:")
+                      for key, value in row.items():
+                          print(f"{key}: {value}")
 
-                  print("")
-                  print("Content date:")
-                  print(product.get("ContentDate"))
+              print("")
 
-                  print("")
-                  print("Origin date:")
-                  print(product.get("OriginDate"))
+              coordinate_matches = []
 
-                  print("")
-                  print("S3 path:")
-                  print(product.get("S3Path"))
+              for row in rows:
 
-                  footprint = product.get("GeoFootprint")
+                  values = list(row.values())
+
+                  nums = [
+                      numeric(v)
+                      for v in values
+                  ]
+
+                  nums = [
+                      n for n in nums
+                      if n is not None and math.isfinite(n)
+                  ]
+
+                  lat_match = any(
+                      abs(n - target_lat) < 0.02
+                      for n in nums
+                  )
+
+                  lon_match = any(
+                      abs(n - target_lon) < 0.02
+                      for n in nums
+                  )
+
+                  if lat_match and lon_match:
+                      coordinate_matches.append(row)
+
+              print(
+                  "Coordinate matches within ~2 km:",
+                  len(coordinate_matches)
+              )
+
+              if coordinate_matches:
+
+                  for row in coordinate_matches[:10]:
+
+                      print("")
+                      print("COORDINATE MATCH:")
+
+                      for key, value in row.items():
+                          print(f"{key}: {value}")
+
+              if not name_matches and not coordinate_matches:
 
                   print("")
                   print(
-                      "GeoFootprint:",
-                      "YES" if footprint else "NO"
+                      "NO MATCH FOUND for this lake."
                   )
-
-              print("")
-              print("======================================")
 
           print("")
-          print("######################################")
-          print("CATALOGUE TEST COMPLETE")
-          print("######################################")
+          print("======================================")
+          print("PROCESSED LAKE TEST COMPLETE")
+          print("======================================")
           PY
