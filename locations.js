@@ -1,6 +1,99 @@
 const swimLocations = [
 
     // =========================
+    // SEA LOCATIONS
+    // =========================
+
+    {
+        id: 1,
+        name: "Blackhead Lighthouse and Gleninagh Pier",
+        county: "Clare",
+        latitude: 53.148,
+        longitude: -9.265,
+        distance: "2.5 km",
+        type: "sea",
+        tideStation: "IESHBWC070_0000_0100_MODELLED"
+    },
+
+    {
+        id: 2,
+        name: "Fanore Beach",
+        county: "Clare",
+        latitude: 53.125,
+        longitude: -9.290,
+        distance: "TBC",
+        type: "sea",
+        tideStation: "IESHBWC070_0000_0100_MODELLED"
+    },
+
+    {
+        id: 3,
+        name: "Lahinch Beach",
+        county: "Clare",
+        latitude: 53.053,
+        longitude: -9.344,
+        distance: "TBC",
+        type: "sea",
+        tideStation: "IESHBWC100_0000_0100_MODELLED"
+    },
+
+    {
+        id: 4,
+        name: "Kilkee Bay",
+        county: "Clare",
+        latitude: 52.679141,
+        longitude: -9.652973,
+        distance: "TBC",
+        type: "sea",
+        tideStation: "IESHBWC070_0000_0400_MODELLED"
+    },
+
+    {
+        id: 5,
+        name: "Whitestrand",
+        county: "Clare",
+        latitude: 52.747723,
+        longitude: -9.549059,
+        distance: "TBC",
+        type: "sea",
+        tideStation: "IESHBWC080_0000_0100_MODELLED"
+    },
+
+    {
+        id: 7,
+        name: "Lambay Island",
+        county: "Dublin",
+        latitude: 53.49222995430973,
+        longitude: -6.015908380729172,
+        distance: "TBC",
+        type: "sea",
+        tideStation: "IEEABWC020_0000_0200_MODELLED"
+    },
+
+    {
+        id: 10,
+        name: "Venus Point Bay",
+        county: "Tahiti",
+        latitude: -17.495652593749423,
+        longitude: -149.49680623257228,
+        distance: "TBC",
+        type: "sea",
+        region: "french-polynesia"
+    },
+
+    {
+        id: 12,
+        name: "Channel Tahiti to Moorea",
+        county: "Tahiti",
+        latitude: -17.596466756769523,
+        longitude: -149.7005889103907,
+        distance: "TBC",
+        type: "sea",
+        region: "french-polynesia"
+    },
+
+
+    // =========================
     // LAKE LOCATIONS
     // =========================
 
@@ -13,6 +106,7 @@ const swimLocations = [
         distance: "TBC",
         type: "lake"
     },
+
     {
         id: 8,
         name: "Portumna Harbour",
@@ -22,6 +116,7 @@ const swimLocations = [
         distance: "TBC",
         type: "lake"
     },
+
     {
         id: 9,
         name: "Twomilegate",
@@ -31,19 +126,21 @@ const swimLocations = [
         distance: "TBC",
         type: "lake"
     },
+
     {
         id: 13,
         name: "Blue Lake",
-        county: "Kyiv Oblast Ukraine ",
+        county: "Kyiv Oblast",
         latitude: 50.2486488821285,
         longitude: 30.56133373633814,
         distance: "TBC",
         type: "lake"
     },
+
     {
         id: 14,
         name: "Gloria Lake",
-        county: "Kyiv Oblast Ukraine",
+        county: "Kyiv Oblast",
         latitude: 50.56906891068027,
         longitude: 29.922190199229075,
         distance: "TBC",
@@ -64,91 +161,6 @@ const swimLocations = [
         distance: "TBC",
         type: "lagoon",
         region: "french-polynesia"
-    },
-
-
-    // =========================
-    // SEA LOCATIONS
-    // =========================
-
-    {
-        id: 1,
-        name: "Blackhead Lighthouse and Gleninagh Pier",
-        county: "Clare",
-        latitude: 53.148,
-        longitude: -9.265,
-        distance: "2.5 km",
-        type: "sea",
-        tideStation: "IESHBWC070_0000_0100_MODELLED"
-    },
-    {
-        id: 2,
-        name: "Fanore Beach",
-        county: "Clare",
-        latitude: 53.125,
-        longitude: -9.290,
-        distance: "TBC",
-        type: "sea",
-        tideStation: "IESHBWC070_0000_0100_MODELLED"
-    },
-    {
-        id: 3,
-        name: "Lahinch Beach",
-        county: "Clare",
-        latitude: 53.053,
-        longitude: -9.344,
-        distance: "TBC",
-        type: "sea",
-        tideStation: "IESHBWC100_0000_0100_MODELLED"
-    },
-    {
-        id: 4,
-        name: "Kilkee Bay",
-        county: "Clare",
-        latitude: 52.679141,
-        longitude: -9.652973,
-        distance: "TBC",
-        type: "sea",
-        tideStation: "IESHBWC070_0000_0400_MODELLED"
-    },
-    {
-        id: 5,
-        name: "Whitestrand",
-        county: "Clare",
-        latitude: 52.747723,
-        longitude: -9.549059,
-        distance: "TBC",
-        type: "sea",
-        tideStation: "IESHBWC080_0000_0100_MODELLED"
-    },
-    {
-        id: 7,
-        name: "Lambay Island",
-        county: "Dublin",
-        latitude: 53.49222995430973,
-        longitude: -6.015908380729172,
-        distance: "TBC",
-        type: "sea",
-        tideStation: "IEEABWC020_0000_0200_MODELLED"
-    },
-    {
-        id: 10,
-        name: "Venus Point Bay",
-        county: "Tahiti",
-        latitude: -17.495652593749423,
-        longitude: -149.49680623257228,
-        distance: "TBC",
-        type: "sea",
-        region: "french-polynesia"
-    },
-    {
-        id: 12,
-        name: "Channel Tahiti to Moorea",
-        county: "Tahiti",
-        latitude: -17.596466756769523,
-        longitude: -149.7005889103907,
-        distance: "TBC",
-        type: "sea",
-        region: "french-polynesia"
     }
+
 ];
